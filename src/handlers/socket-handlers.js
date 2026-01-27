@@ -185,11 +185,17 @@ function registerSocketHandlers(io, rooms) {
             room.gameState = 'voting';
             room.votingEndTime = Date.now() + room.config.votingTime * 1000;
 
-            // Usar el orden de descripción para la votación
-            const votingOrder = room.descriptionOrder || room.players.filter(p => p.alive).map(p => ({
-                id: p.id,
-                username: p.username
-            }));
+            // Filtrar jugadores vivos del orden de descripción para la votación
+            const alivePlayers = room.players.filter(p => p.alive);
+            const votingOrder = room.descriptionOrder
+                ? room.descriptionOrder.filter(p => {
+                    // Buscar el jugador en la lista de vivos
+                    return alivePlayers.some(alive => alive.id === p.id);
+                })
+                : alivePlayers.map(p => ({
+                    id: p.id,
+                    username: p.username
+                }));
 
             io.to(data.roomCode).emit('votingStarted', {
                 votingOrder: votingOrder,
@@ -282,15 +288,31 @@ function registerSocketHandlers(io, rooms) {
                 }
             } else {
                 // Aún hay jugadores que deben votar
-                const nextVoterIndex = room.votes.length % alivePlayers.length;
+                // Reconstruir el orden de votación de jugadores vivos
+                const alivePlayers = room.players.filter(p => p.alive);
+                const currentVotingOrder = room.descriptionOrder
+                    ? room.descriptionOrder.filter(p =>
+                        alivePlayers.some(alive => alive.id === p.id)
+                    )
+                    : alivePlayers.map(p => ({
+                        id: p.id,
+                        username: p.username
+                    }));
+
+                // Encontrar el siguiente votante que no haya votado
+                const votedPlayerIds = room.votes.map(v => v.voterId);
+                let nextVoterIndex = 0;
+                for (let i = 0; i < currentVotingOrder.length; i++) {
+                    if (!votedPlayerIds.includes(currentVotingOrder[i].id)) {
+                        nextVoterIndex = i;
+                        break;
+                    }
+                }
 
                 io.to(data.roomCode).emit('voteCast', {
                     voterName: voter.username,
                     votedForName: votedForPlayer.username,
-                    votingOrder: alivePlayers.map(p => ({
-                        id: p.id,
-                        username: p.username
-                    })),
+                    votingOrder: currentVotingOrder,
                     currentVoterIndex: nextVoterIndex,
                     votingFinished: false
                 });
