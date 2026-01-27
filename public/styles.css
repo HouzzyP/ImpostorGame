@@ -777,3 +777,79 @@ select {
         transform: translateY(-20px);
     }
 }
+
+/* Panel de jugadores en vivo */
+.live-players-panel {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    width: 220px;
+    background: var(--bg-1);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    z-index: 100;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.live-players-header {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-2);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+}
+
+.live-players-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.live-player-item {
+    padding: 8px 10px;
+    background: var(--bg-2);
+    border-radius: 6px;
+    font-size: 13px;
+    color: var(--text-1);
+    border: 1px solid transparent;
+    transition: all var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.live-player-item.alive {
+    border-color: var(--border);
+}
+
+.live-player-item.voted {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.live-player-item.eliminated {
+    background: var(--danger-soft);
+    border-color: var(--danger);
+    color: var(--danger);
+    text-decoration: line-through;
+    opacity: 0.6;
+}
+
+.live-player-name {
+    flex: 1;
+    word-break: break-word;
+}
+
+.live-player-status {
+    font-size: 11px;
+    margin-left: 6px;
+    opacity: 0.7;
+}

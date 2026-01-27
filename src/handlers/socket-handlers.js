@@ -61,6 +61,13 @@ function registerSocketHandlers(io, rooms) {
                 return;
             }
 
+            // Validar que no haya otro jugador con el mismo nombre en la sala
+            const existingPlayer = room.players.find(p => p.username.toLowerCase() === data.username.toLowerCase());
+            if (existingPlayer) {
+                socket.emit('error', 'Ya hay un jugador con ese nombre en la sala');
+                return;
+            }
+
             // Permitir unirse como espectador si el juego ya empezó
             if (room.gameState !== 'waiting') {
                 socket.join(data.roomCode);
@@ -142,10 +149,16 @@ function registerSocketHandlers(io, rooms) {
                 room.players.forEach(p => {
                     const playerSocket = io.sockets.sockets.get(p.id);
                     if (playerSocket) {
+                        const players = room.players.map(player => ({
+                            id: player.id,
+                            username: player.username,
+                            isSpectator: player.isSpectator || false
+                        }));
                         playerSocket.emit('yourRole', {
                             isImpostor: p.role === 'impostor',
                             word: p.word,
-                            category: p.category
+                            category: p.category,
+                            players: players
                         });
                     }
                 });
@@ -191,6 +204,13 @@ function registerSocketHandlers(io, rooms) {
 
             const voter = getPlayerFromRoom(room, socket.id);
             if (!voter || voter.isSpectator) return;
+
+            // Validar que el votante no haya votado ya
+            const alreadyVoted = room.votes.find(v => v.voterId === socket.id);
+            if (alreadyVoted) {
+                console.log(`[${new Date().toLocaleTimeString()}] ${voter.username} intentó votar dos veces en ${data.roomCode}`);
+                return;
+            }
 
             const votedForPlayer = getPlayerFromRoom(room, data.votedFor);
             if (!votedForPlayer || !votedForPlayer.alive) return;
@@ -411,6 +431,8 @@ function registerSocketHandlers(io, rooms) {
                                 message: `${playerToRemove.username} se desconectó. Volviendo al lobby.`,
                                 categories: categoryNames
                             });
+                            // Emitir lista actualizada sin el jugador desconectado
+                            io.to(roomCode).emit('playerListUpdate', room.players);
                             console.log(`[${new Date().toLocaleTimeString()}] Partida en ${roomCode} interrumpida por desconexión`);
                         } else {
                             // Si está en lobby, solo remover
@@ -419,11 +441,12 @@ function registerSocketHandlers(io, rooms) {
                             console.log(`[${new Date().toLocaleTimeString()}] Jugador removido de ${roomCode}`);
                         }
                     }
-                    break;
                 }
+                break;
             }
+        }
         });
-    });
+});
 }
 
 module.exports = { registerSocketHandlers };

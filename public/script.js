@@ -10,6 +10,7 @@ let pendingNextState = null; // caches continueGame or gameEnded payloads
 let inEliminationScreen = false; // true while showing elimination/tie feedback
 let descriptionOrder = []; // orden aleatorio de descripción
 let votingStartTime = null; // para mostrar tiempo transcurrido en votación
+let livePlayersState = {}; // { playerId: { username, alive, voted } }
 
 // ============================================
 // THEME MANAGEMENT
@@ -181,6 +182,10 @@ function continueGame() {
                 <div class="player-item"><span class="player-name">${escapeHtml(p.username)}</span></div>
             `).join('');
             document.getElementById('roundNumber').textContent = roundNumber;
+
+            // Reinitializar el panel de jugadores en vivo con los jugadores aún vivos
+            initLivePlayersPanel(alivePlayers);
+
             document.getElementById('startVotingBtn').style.display = isHost ? 'block' : 'none';
             document.getElementById('waitingVoteMessage').style.display = isHost ? 'none' : 'block';
             showScreen('gameScreen');
@@ -243,6 +248,73 @@ function renderPlayerList(players, elementId) {
             ${p.isHost ? '<span class="badge">Host</span>' : ''}
         </div>
     `).join('');
+}
+
+function initLivePlayersPanel(players) {
+    livePlayersState = {};
+    players.forEach(p => {
+        livePlayersState[p.id] = { username: p.username, alive: true, voted: false };
+    });
+    updateLivePlayersPanel();
+}
+
+function updateLivePlayersPanel() {
+    // Actualizar panel en gameScreen
+    const panel = document.getElementById('livePlayersList');
+    if (panel) {
+        const playerIds = Object.keys(livePlayersState);
+        panel.innerHTML = playerIds.map(id => {
+            const p = livePlayersState[id];
+            const statusClass = !p.alive ? 'eliminated' : (p.voted ? 'voted' : 'alive');
+            const statusText = p.voted ? '✓' : (p.alive ? '●' : '✗');
+            return `
+                <div class="live-player-item ${statusClass}">
+                    <span class="live-player-name">${escapeHtml(p.username)}</span>
+                    <span class="live-player-status">${statusText}</span>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // Actualizar panel en votingScreen
+    const votingPanel = document.getElementById('livePlayersListVoting');
+    if (votingPanel) {
+        const playerIds = Object.keys(livePlayersState);
+        votingPanel.innerHTML = playerIds.map(id => {
+            const p = livePlayersState[id];
+            const statusClass = !p.alive ? 'eliminated' : (p.voted ? 'voted' : 'alive');
+            const statusText = p.voted ? '✓' : (p.alive ? '●' : '✗');
+            return `
+                <div class="live-player-item ${statusClass}">
+                    <span class="live-player-name">${escapeHtml(p.username)}</span>
+                    <span class="live-player-status">${statusText}</span>
+                </div>
+            `;
+        }).join('');
+    }
+}
+
+function markPlayerVoted(playerId) {
+    if (livePlayersState[playerId]) {
+        livePlayersState[playerId].voted = true;
+        updateLivePlayersPanel();
+    }
+}
+
+function markPlayerEliminated(playerId) {
+    if (livePlayersState[playerId]) {
+        livePlayersState[playerId].alive = false;
+        updateLivePlayersPanel();
+    }
+}
+
+function clearLivePlayersPanel() {
+    livePlayersState = {};
+    const panel = document.getElementById('livePlayersList');
+    if (panel) panel.innerHTML = '';
+
+    const votingPanel = document.getElementById('livePlayersListVoting');
+    if (votingPanel) votingPanel.innerHTML = '';
 }
 
 function updateRoleDisplay(prefix, isImpostor, word, category) {
@@ -339,18 +411,46 @@ socket.on('becameHost', () => {
 // SOCKET EVENTS - GAME LOGIC
 // ============================================
 
-socket.on('yourRole', ({ isImpostor, word, category }) => {
+socket.on('yourRole', ({ isImpostor, word, category, players }) => {
     myRole = { isImpostor, word };
     updateRoleDisplay('', isImpostor, word, category);
     document.getElementById('readyButton').style.display = isHost ? 'block' : 'none';
     document.getElementById('waitingMessage').style.display = isHost ? 'none' : 'block';
+
+    // Inicializar panel de jugadores en vivo
+    if (players) {
+        const alivePlayers = players.filter(p => !p.isSpectator);
+        initLivePlayersPanel(alivePlayers);
+    }
+
     showScreen('roleScreen');
+});
+
+socket.on('gameStarted', ({ category, descriptionOrder: order }) => {
+    descriptionOrder = order || [];
+
+    // Mostrar orden de descripción
+    if (descriptionOrder.length > 0) {
+        const orderDisplay = document.getElementById('descriptionOrderDisplay');
+        if (orderDisplay) {
+            orderDisplay.innerHTML = descriptionOrder.map((p, i) => `
+                <div class="order-item">${i + 1}. ${escapeHtml(p.username)}</div>
+            `).join('');
+        }
+    }
+
+    toast(`Categoría: ${category}`);
 });
 
 socket.on('votingStarted', ({ votingOrder, currentVoterIndex }) => {
     hasVoted = false;
     votingStartTime = Date.now(); // Inicia el contador de tiempo transcurrido
     document.getElementById('votesDisplay').innerHTML = '';
+
+    // Resetear votos en el panel de jugadores
+    Object.values(livePlayersState).forEach(p => { p.voted = false; });
+    updateLivePlayersPanel();
+
     updateVotingUI(votingOrder, currentVoterIndex);
     document.getElementById('finishVotingBtn').style.display = isHost ? 'block' : 'none';
     showScreen('votingScreen');
@@ -362,10 +462,19 @@ socket.on('voteCast', ({ voterName, votedForName, votingOrder, currentVoterIndex
     const log = document.getElementById('votesDisplay');
     log.innerHTML += `<div class="vote-entry"><span>${escapeHtml(voterName)}</span> voto por <span>${escapeHtml(votedForName)}</span></div>`;
     log.scrollTop = log.scrollHeight;
+
+    // Marcar al votante en el panel en vivo
+    const voterPlayer = Object.entries(livePlayersState).find(([_, p]) => p.username === voterName);
+    if (voterPlayer) markPlayerVoted(voterPlayer[0]);
+
     if (!votingFinished) updateVotingUI(votingOrder, currentVoterIndex);
 });
 
 socket.on('playerEliminated', ({ playerName, wasImpostor, gameEnded, winner, word, players }) => {
+    // Marcar al jugador como eliminado en el panel en vivo
+    const eliminatedPlayer = Object.entries(livePlayersState).find(([_, p]) => p.username === playerName);
+    if (eliminatedPlayer) markPlayerEliminated(eliminatedPlayer[0]);
+
     // Show elimination feedback first
     inEliminationScreen = true;
     document.getElementById('eliminatedName').textContent = playerName + ' fue eliminado';
@@ -402,6 +511,9 @@ socket.on('continueGame', ({ alivePlayers, roundNumber }) => {
 });
 
 socket.on('gameEnded', ({ winner, players, word }) => {
+    // Limpiar panel de jugadores en vivo
+    clearLivePlayersPanel();
+
     const banner = document.getElementById('winnerBanner');
     const title = document.getElementById('winnerTitle');
     const msg = document.getElementById('winnerMessage');
@@ -430,6 +542,9 @@ socket.on('gameEnded', ({ winner, players, word }) => {
 });
 
 socket.on('gameResetToLobby', ({ categories: cats }) => {
+    // Limpiar panel de jugadores en vivo
+    clearLivePlayersPanel();
+
     categories = cats;
     populateCategories(cats);
     if (isHost) {
@@ -442,6 +557,9 @@ socket.on('gameResetToLobby', ({ categories: cats }) => {
 });
 
 socket.on('gameInterrupted', ({ message, categories: cats }) => {
+    // Limpiar panel de jugadores en vivo
+    clearLivePlayersPanel();
+
     categories = cats;
     populateCategories(cats);
     toast(message, 'warning');
