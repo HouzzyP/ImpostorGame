@@ -318,10 +318,16 @@ socket.on('gameEnded', ({ winner, players, word }) => {
     showScreen('endScreen');
 });
 
-socket.on('gameResetToLobby', ({ categories }) => {
-    Object.assign(window.categories, categories);
-    loadCategories();
-    showScreen('lobbyScreen');
+socket.on('gameResetToLobby', ({ categories: cats }) => {
+    categories = cats;
+    populateCategories(cats);
+    if (isHost) {
+        document.getElementById('playerCount').textContent = document.querySelectorAll('#playerListHost .player-item').length;
+        document.getElementById('startButton').disabled = document.querySelectorAll('#playerListHost .player-item').length < 4;
+        showScreen('lobbyHostScreen');
+    } else {
+        showScreen('lobbyPlayerScreen');
+    }
 });
 
 socket.on('playerDisconnected', ({ playersRemaining }) => {
