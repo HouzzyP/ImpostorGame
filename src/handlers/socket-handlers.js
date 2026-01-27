@@ -181,7 +181,7 @@ function registerSocketHandlers(io, rooms) {
             if (!voter) return;
 
             const votedForPlayer = getPlayerFromRoom(room, data.votedFor);
-            if (!votedForPlayer) return;
+            if (!votedForPlayer || !votedForPlayer.alive) return;
 
             // Registrar voto
             room.votes.push({
@@ -192,19 +192,76 @@ function registerSocketHandlers(io, rooms) {
 
             // Calcular siguiente votante
             const alivePlayers = room.players.filter(p => p.alive);
-            const nextVoterIndex = room.votes.length % alivePlayers.length;
+            const allVoted = room.votes.length >= alivePlayers.length;
 
-            // Notificar voto emitido
-            io.to(data.roomCode).emit('voteCast', {
-                voterName: voter.username,
-                votedForName: votedForPlayer.username,
-                votingOrder: alivePlayers.map(p => ({
-                    id: p.id,
-                    username: p.username
-                })),
-                currentVoterIndex: nextVoterIndex,
-                votingFinished: false
-            });
+            if (allVoted) {
+                // Todos votaron, finalizar votación automáticamente
+                room.gameState = 'ending';
+                const voteResult = processVotes(room, io);
+
+                if (voteResult.isTie) {
+                    io.to(data.roomCode).emit('tieVoting', {
+                        players: voteResult.votedPlayers,
+                        message: 'Empate! Nadie fue eliminado. El juego continúa.'
+                    });
+                    // Volver al juego después del empate
+                    room.gameState = 'playing';
+                    room.votes = [];
+                    room.discussionEndTime = Date.now() + room.config.discussionTime * 1000;
+                    io.to(data.roomCode).emit('continueGame', {
+                        alivePlayers: room.players.filter(p => p.alive),
+                        roundNumber: room.currentRound
+                    });
+                } else {
+                    const eliminatedPlayer = getPlayerFromRoom(room, voteResult.eliminated);
+                    if (eliminatedPlayer) {
+                        eliminatedPlayer.alive = false;
+
+                        io.to(data.roomCode).emit('playerEliminated', {
+                            playerName: eliminatedPlayer.username,
+                            wasImpostor: voteResult.impostorFound,
+                            impostorFound: voteResult.impostorFound
+                        });
+                    }
+
+                    const winCondition = checkGameWinner(room);
+                    if (winCondition.gameOver) {
+                        room.gameWinner = winCondition;
+                        io.to(data.roomCode).emit('gameEnded', {
+                            winner: winCondition.winner,
+                            word: room.word,
+                            players: room.players.map(p => ({
+                                name: p.username,
+                                isImpostor: p.role === 'impostor',
+                                alive: p.alive
+                            }))
+                        });
+                    } else {
+                        // Juego continúa, volver a la pantalla de juego
+                        room.gameState = 'playing';
+                        room.currentRound++;
+                        room.discussionEndTime = Date.now() + room.config.discussionTime * 1000;
+                        io.to(data.roomCode).emit('continueGame', {
+                            alivePlayers: room.players.filter(p => p.alive),
+                            roundNumber: room.currentRound
+                        });
+                    }
+                }
+            } else {
+                // Aún hay jugadores que deben votar
+                const nextVoterIndex = room.votes.length % alivePlayers.length;
+
+                io.to(data.roomCode).emit('voteCast', {
+                    voterName: voter.username,
+                    votedForName: votedForPlayer.username,
+                    votingOrder: alivePlayers.map(p => ({
+                        id: p.id,
+                        username: p.username
+                    })),
+                    currentVoterIndex: nextVoterIndex,
+                    votingFinished: false
+                });
+            }
         });
 
         // ========== FINALIZAR VOTACIÓN ==========
@@ -213,7 +270,6 @@ function registerSocketHandlers(io, rooms) {
             if (!room) return;
 
             room.gameState = 'ending';
-
             const voteResult = processVotes(room, io);
 
             if (voteResult.isTie) {
@@ -222,6 +278,14 @@ function registerSocketHandlers(io, rooms) {
                     players: voteResult.votedPlayers,
                     message: 'Empate! Nadie fue eliminado. El juego continúa.'
                 });
+                // Volver al juego después del empate
+                room.gameState = 'playing';
+                room.votes = [];
+                room.discussionEndTime = Date.now() + room.config.discussionTime * 1000;
+                io.to(data.roomCode).emit('continueGame', {
+                    alivePlayers: room.players.filter(p => p.alive),
+                    roundNumber: room.currentRound
+                });
             } else {
                 // Se elimina a alguien
                 const eliminatedPlayer = getPlayerFromRoom(room, voteResult.eliminated);
@@ -229,9 +293,8 @@ function registerSocketHandlers(io, rooms) {
                     eliminatedPlayer.alive = false;
 
                     io.to(data.roomCode).emit('playerEliminated', {
-                        eliminated: voteResult.eliminated,
-                        username: eliminatedPlayer.username,
-                        role: eliminatedPlayer.role,
+                        playerName: eliminatedPlayer.username,
+                        wasImpostor: voteResult.impostorFound,
                         impostorFound: voteResult.impostorFound
                     });
                 }
@@ -248,6 +311,15 @@ function registerSocketHandlers(io, rooms) {
                             isImpostor: p.role === 'impostor',
                             alive: p.alive
                         }))
+                    });
+                } else {
+                    // Juego continúa, volver a la pantalla de juego
+                    room.gameState = 'playing';
+                    room.currentRound++;
+                    room.discussionEndTime = Date.now() + room.config.discussionTime * 1000;
+                    io.to(data.roomCode).emit('continueGame', {
+                        alivePlayers: room.players.filter(p => p.alive),
+                        roundNumber: room.currentRound
                     });
                 }
             }

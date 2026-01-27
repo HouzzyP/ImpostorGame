@@ -299,7 +299,7 @@ socket.on('tieVoting', ({ votes }) => {
 socket.on('continueGame', ({ alivePlayers, roundNumber }) => {
     updateRoleDisplay('Game', myRole.isImpostor, myRole.word, null);
     document.getElementById('alivePlayersList').innerHTML = alivePlayers.map(p => `
-        <div class="player-item"><span class="player-name">${escapeHtml(p.name)}</span></div>
+        <div class="player-item"><span class="player-name">${escapeHtml(p.username)}</span></div>
     `).join('');
     document.getElementById('roundNumber').textContent = roundNumber;
     document.getElementById('startVotingBtn').style.display = isHost ? 'block' : 'none';
@@ -353,6 +353,17 @@ socket.on('playerDisconnected', ({ playersRemaining }) => {
 
 socket.on('error', msg => {
     toast(msg, 'error');
+});
+
+socket.on('hostDisconnected', ({ message }) => {
+    toast(message, 'error');
+    setTimeout(() => {
+        location.reload();
+    }, 2000);
+});
+
+socket.on('playerDisconnected', ({ playersRemaining }) => {
+    toast('Un jugador se desconectó', 'info');
 });
 
 // ============================================
