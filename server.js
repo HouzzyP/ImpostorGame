@@ -115,7 +115,7 @@ io.on('connection', (socket) => {
                 category: 'videojuegos',
                 impostorCount: 1
             },
-            gameState: 'lobby', // lobby, playing, voting, results, ended
+            gameState: 'lobby',
             currentWord: null,
             votingOrder: [],
             currentVoterIndex: 0,
@@ -244,13 +244,24 @@ io.on('connection', (socket) => {
 
     socket.on('castVote', ({ roomCode, votedForId }) => {
         const room = rooms.get(roomCode);
-        if (!room) return;
+        if (!room) {
+            console.log('Room not found');
+            return;
+        }
 
         const voter = room.players.find(p => p.id === socket.id);
-        if (!voter || !voter.isAlive || voter.hasVoted) return;
+        if (!voter || !voter.isAlive || voter.hasVoted) {
+            console.log('Invalid voter or already voted');
+            return;
+        }
 
         const currentVoterId = room.votingOrder[room.currentVoterIndex];
-        if (currentVoterId !== socket.id) return;
+        console.log('Current voter should be:', currentVoterId, 'Actual voter:', socket.id);
+
+        if (currentVoterId !== socket.id) {
+            console.log('Not your turn!');
+            return;
+        }
 
         voter.hasVoted = true;
         voter.votedFor = votedForId;
@@ -260,6 +271,18 @@ io.on('connection', (socket) => {
         }
         room.votes[votedForId]++;
 
+        console.log(`Vote registered: ${voter.name} voted for ${votedForId}`);
+        console.log(`Current index before increment: ${room.currentVoterIndex}`);
+
+        // Avanzar al siguiente votante
+        room.currentVoterIndex++;
+
+        console.log(`Current index after increment: ${room.currentVoterIndex}`);
+        console.log(`Total voters: ${room.votingOrder.length}`);
+
+        const votingFinished = room.currentVoterIndex >= room.votingOrder.length;
+
+        // Emitir el voto con la información actualizada
         io.to(roomCode).emit('voteCast', {
             voterId: socket.id,
             voterName: voter.name,
@@ -270,71 +293,72 @@ io.on('connection', (socket) => {
                 const player = room.players.find(p => p.id === id);
                 return { id: player.id, name: player.name };
             }),
-            currentVoterIndex: room.currentVoterIndex
+            currentVoterIndex: room.currentVoterIndex,
+            votingFinished: votingFinished
         });
 
-        room.currentVoterIndex++;
+        console.log('Voting finished:', votingFinished);
 
-        if (room.currentVoterIndex >= room.votingOrder.length) {
+        if (votingFinished) {
             // Votación terminada
+            console.log('Finishing voting...');
             finishVoting(room, roomCode);
         }
     });
-});
 
-function finishVoting(room, roomCode) {
-    let maxVotes = 0;
-    let eliminatedId = null;
+    function finishVoting(room, roomCode) {
+        let maxVotes = 0;
+        let eliminatedId = null;
 
-    for (const [playerId, voteCount] of Object.entries(room.votes)) {
-        if (voteCount > maxVotes) {
-            maxVotes = voteCount;
-            eliminatedId = playerId;
+        for (const [playerId, voteCount] of Object.entries(room.votes)) {
+            if (voteCount > maxVotes) {
+                maxVotes = voteCount;
+                eliminatedId = playerId;
+            }
         }
+
+        const eliminated = room.players.find(p => p.id === eliminatedId);
+        eliminated.isAlive = false;
+
+        io.to(roomCode).emit('playerEliminated', {
+            playerId: eliminatedId,
+            playerName: eliminated.name,
+            wasImpostor: eliminated.isImpostor,
+            votes: room.votes
+        });
+
+        // Verificar condiciones de victoria
+        setTimeout(() => {
+            const alivePlayers = room.players.filter(p => p.isAlive);
+            const aliveImpostors = alivePlayers.filter(p => p.isImpostor).length;
+            const aliveInnocents = alivePlayers.filter(p => !p.isImpostor).length;
+
+            if (aliveImpostors === 0) {
+                // Ganaron los inocentes
+                room.gameState = 'ended';
+                io.to(roomCode).emit('gameEnded', {
+                    winner: 'innocents',
+                    players: room.players,
+                    word: room.currentWord
+                });
+            } else if (aliveImpostors >= aliveInnocents) {
+                // Ganaron los impostores
+                room.gameState = 'ended';
+                io.to(roomCode).emit('gameEnded', {
+                    winner: 'impostors',
+                    players: room.players,
+                    word: room.currentWord
+                });
+            } else {
+                // Continuar jugando
+                room.gameState = 'playing';
+                room.roundNumber++;
+                io.to(roomCode).emit('continueGame', {
+                    alivePlayers: alivePlayers.map(p => ({ id: p.id, name: p.name }))
+                });
+            }
+        }, 3000);
     }
-
-    const eliminated = room.players.find(p => p.id === eliminatedId);
-    eliminated.isAlive = false;
-
-    io.to(roomCode).emit('playerEliminated', {
-        playerId: eliminatedId,
-        playerName: eliminated.name,
-        wasImpostor: eliminated.isImpostor,
-        votes: room.votes
-    });
-
-    // Verificar condiciones de victoria
-    setTimeout(() => {
-        const alivePlayers = room.players.filter(p => p.isAlive);
-        const aliveImpostors = alivePlayers.filter(p => p.isImpostor).length;
-        const aliveInnocents = alivePlayers.filter(p => !p.isImpostor).length;
-
-        if (aliveImpostors === 0) {
-            // Ganaron los inocentes
-            room.gameState = 'ended';
-            io.to(roomCode).emit('gameEnded', {
-                winner: 'innocents',
-                players: room.players,
-                word: room.currentWord
-            });
-        } else if (aliveImpostors >= aliveInnocents) {
-            // Ganaron los impostores
-            room.gameState = 'ended';
-            io.to(roomCode).emit('gameEnded', {
-                winner: 'impostors',
-                players: room.players,
-                word: room.currentWord
-            });
-        } else {
-            // Continuar jugando
-            room.gameState = 'playing';
-            room.roundNumber++;
-            io.to(roomCode).emit('continueGame', {
-                alivePlayers: alivePlayers.map(p => ({ id: p.id, name: p.name }))
-            });
-        }
-    }, 3000);
-
 
     socket.on('resetGame', (roomCode) => {
         const room = rooms.get(roomCode);
@@ -380,7 +404,7 @@ function finishVoting(room, roomCode) {
             }
         });
     });
-};
+});
 
 http.listen(PORT, () => {
     console.log(`🎮 Servidor corriendo en http://localhost:${PORT}`);

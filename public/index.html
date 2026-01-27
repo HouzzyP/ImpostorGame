@@ -596,17 +596,33 @@
     });
 
     socket.on('votingStarted', ({ votingOrder, currentVoterIndex }) => {
+      console.log('Voting started!', {
+        votingOrder,
+        currentVoterIndex,
+        myPlayerId
+      });
       showScreen('votingScreen');
       updateVotingUI(votingOrder, currentVoterIndex, {});
     });
 
     socket.on('voteCast', ({ voterId, voterName, votedForId, votedForName, votes, votingOrder, currentVoterIndex, votingFinished }) => {
+      console.log('Vote cast received:', {
+        voterName,
+        votedForName,
+        currentVoterIndex,
+        votingFinished,
+        totalVoters: votingOrder.length
+      });
+      
       const votesDisplay = document.getElementById('votesDisplay');
       votesDisplay.innerHTML += `<div class="vote-count"><span>${voterName} votó a ${votedForName}</span></div>`;
       
       // Actualizar UI para el siguiente votante (si no terminó)
       if (!votingFinished && currentVoterIndex < votingOrder.length) {
+        console.log('Next voter:', votingOrder[currentVoterIndex]);
         updateVotingUI(votingOrder, currentVoterIndex, votes);
+      } else {
+        console.log('Voting finished or no more voters');
       }
     });
 
@@ -671,6 +687,13 @@
     });
 
     function updateVotingUI(votingOrder, currentVoterIndex, votes) {
+      console.log('Updating voting UI:', {
+        currentVoterIndex,
+        totalVoters: votingOrder.length,
+        myPlayerId,
+        currentVoter: votingOrder[currentVoterIndex]
+      });
+      
       const currentVoterId = votingOrder[currentVoterIndex].id;
       const currentVoterName = votingOrder[currentVoterIndex].name;
       
@@ -680,12 +703,14 @@
       const votingButtons = document.getElementById('votingButtons');
       
       if (currentVoterId === myPlayerId) {
+        console.log('It is MY turn to vote!');
         // Es mi turno, mostrar botones para votar
         const alivePlayers = votingOrder.filter(p => p.id !== myPlayerId);
         votingButtons.innerHTML = alivePlayers.map(p => `
           <button class="vote-button" onclick="castVote('${p.id}')">${p.name}</button>
         `).join('');
       } else {
+        console.log('Not my turn, waiting...');
         // No es mi turno, mostrar mensaje de espera
         votingButtons.innerHTML = '<div class="info-message">Esperando a que los demás voten...</div>';
       }
