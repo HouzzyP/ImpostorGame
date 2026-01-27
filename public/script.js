@@ -158,8 +158,8 @@ function escapeHtml(text) {
 
 function renderPlayerList(players, elementId) {
     document.getElementById(elementId).innerHTML = players.map(p => `
-        <div class="player-item ${p.isHost ? 'host' : ''} ${!p.isAlive ? 'dead' : ''}">
-            <span class="player-name">${escapeHtml(p.name)}</span>
+        <div class="player-item ${p.isHost ? 'host' : ''} ${!p.alive ? 'dead' : ''}">
+            <span class="player-name">${escapeHtml(p.username)}</span>
             ${p.isHost ? '<span class="badge">Host</span>' : ''}
         </div>
     `).join('');
@@ -188,13 +188,13 @@ function updateVotingUI(votingOrder, currentVoterIndex) {
     const status = document.getElementById('votingStatus');
 
     status.classList.toggle('my-turn', isMyTurn);
-    document.getElementById('currentVoterDisplay').textContent = isMyTurn ? 'Es tu turno' : 'Turno de ' + current.name;
+    document.getElementById('currentVoterDisplay').textContent = isMyTurn ? 'Es tu turno' : 'Turno de ' + current.username;
 
     const btns = document.getElementById('votingButtons');
     if (isMyTurn) {
         btns.innerHTML = votingOrder
             .filter(p => p.id !== myPlayerId)
-            .map(p => `<button class="btn btn-vote" onclick="castVote('${p.id}')">${escapeHtml(p.name)}</button>`)
+            .map(p => `<button class="btn btn-vote" onclick="castVote('${p.id}')">${escapeHtml(p.username)}</button>`)
             .join('');
     } else {
         btns.innerHTML = '<p class="waiting">Esperando...</p>';

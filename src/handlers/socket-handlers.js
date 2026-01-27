@@ -134,7 +134,7 @@ function registerSocketHandlers(io, rooms) {
                     const playerSocket = io.sockets.sockets.get(p.id);
                     if (playerSocket) {
                         playerSocket.emit('yourRole', {
-                            role: p.role,
+                            isImpostor: p.role === 'impostor',
                             word: p.word,
                             category: p.category
                         });
@@ -164,11 +164,11 @@ function registerSocketHandlers(io, rooms) {
             room.votingEndTime = Date.now() + room.config.votingTime * 1000;
 
             io.to(data.roomCode).emit('votingStarted', {
-                players: room.players.filter(p => p.alive).map(p => ({
+                votingOrder: room.players.filter(p => p.alive).map(p => ({
                     id: p.id,
                     username: p.username
                 })),
-                timeRemaining: room.config.votingTime
+                currentVoterIndex: 0
             });
         });
 
@@ -179,6 +179,9 @@ function registerSocketHandlers(io, rooms) {
 
             const voter = getPlayerFromRoom(room, socket.id);
             if (!voter) return;
+
+            const votedForPlayer = getPlayerFromRoom(room, data.votedFor);
+            if (!votedForPlayer) return;
 
             // Registrar voto (reemplazar si ya votó)
             const existingVoteIndex = room.votes.findIndex(v => v.voterId === socket.id);
@@ -192,10 +195,16 @@ function registerSocketHandlers(io, rooms) {
                 });
             }
 
-            // Notificar votación actualizada
-            io.to(data.roomCode).emit('votesCasted', {
-                totalVotes: room.votes.length,
-                totalPlayers: room.players.filter(p => p.alive).length
+            // Notificar voto emitido
+            io.to(data.roomCode).emit('voteCast', {
+                voterName: voter.username,
+                votedForName: votedForPlayer.username,
+                votingOrder: room.players.filter(p => p.alive).map(p => ({
+                    id: p.id,
+                    username: p.username
+                })),
+                currentVoterIndex: 0,
+                votingFinished: false
             });
         });
 
@@ -234,10 +243,10 @@ function registerSocketHandlers(io, rooms) {
                     room.gameWinner = winCondition;
                     io.to(data.roomCode).emit('gameEnded', {
                         winner: winCondition.winner,
-                        reason: winCondition.reason,
-                        stats: room.players.map(p => ({
-                            username: p.username,
-                            role: p.role,
+                        word: room.word,
+                        players: room.players.map(p => ({
+                            name: p.username,
+                            isImpostor: p.role === 'impostor',
                             alive: p.alive
                         }))
                     });
@@ -254,7 +263,8 @@ function registerSocketHandlers(io, rooms) {
             if (player && player.isHost) {
                 resetRoomForNewRound(room);
                 io.to(data.roomCode).emit('gameResetToLobby', {
-                    room: getRoomPublicInfo(room)
+                    room: getRoomPublicInfo(room),
+                    categories: categoryNames
                 });
             }
         });
@@ -266,7 +276,8 @@ function registerSocketHandlers(io, rooms) {
 
             resetRoomForNewRound(room);
             io.to(data.roomCode).emit('gameResetToLobby', {
-                room: getRoomPublicInfo(room)
+                room: getRoomPublicInfo(room),
+                categories: categoryNames
             });
         });
 
