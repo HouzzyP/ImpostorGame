@@ -2,11 +2,14 @@ const socket = io();
 let currentRoom = null;
 let myPlayerId = null;
 let isHost = false;
+let isSpectator = false;
 let myRole = null;
 let categories = {};
 let hasVoted = false;
 let pendingNextState = null; // caches continueGame or gameEnded payloads
 let inEliminationScreen = false; // true while showing elimination/tie feedback
+let descriptionOrder = []; // orden aleatorio de descripción
+let votingStartTime = null; // para mostrar tiempo transcurrido en votación
 
 // ============================================
 // THEME MANAGEMENT
@@ -143,6 +146,29 @@ function castVote(id) {
     socket.emit('castVote', { roomCode: currentRoom, votedFor: id });
 }
 
+function sendReaction(emoji) {
+    socket.emit('sendReaction', { roomCode: currentRoom, emoji });
+}
+
+function startVotingTimer() {
+    const timerEl = document.getElementById('votingTimer');
+    if (!timerEl) return;
+
+    const updateTimer = () => {
+        if (!votingStartTime) return;
+        const elapsed = Math.floor((Date.now() - votingStartTime) / 1000);
+        const mins = Math.floor(elapsed / 60);
+        const secs = elapsed % 60;
+        timerEl.textContent = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+    };
+
+    updateTimer();
+    const interval = setInterval(() => {
+        if (document.activeElement && document.activeElement.id !== 'votingScreen') clearInterval(interval);
+        updateTimer();
+    }, 500);
+}
+
 function continueGame() {
     // Apply any pending next state after elimination/tie feedback
     if (pendingNextState) {
@@ -266,13 +292,20 @@ socket.on('roomCreated', ({ roomCode, room, categories: cats }) => {
     showScreen('lobbyHostScreen');
 });
 
-socket.on('roomJoined', ({ roomCode, room, categories: cats }) => {
+socket.on('roomJoined', ({ roomCode, room, categories: cats, isSpectator: spec }) => {
     currentRoom = roomCode;
     myPlayerId = socket.id;
     isHost = false;
+    isSpectator = spec || false;
     categories = cats;
     document.getElementById('roomCodePlayer').textContent = roomCode;
-    showScreen('lobbyPlayerScreen');
+
+    if (isSpectator) {
+        toast('Unido como espectador');
+        showScreen('spectatorScreen');
+    } else {
+        showScreen('lobbyPlayerScreen');
+    }
 });
 
 socket.on('playerListUpdate', (players) => {
@@ -314,10 +347,12 @@ socket.on('yourRole', ({ isImpostor, word, category }) => {
 
 socket.on('votingStarted', ({ votingOrder, currentVoterIndex }) => {
     hasVoted = false;
+    votingStartTime = Date.now(); // Inicia el contador de tiempo transcurrido
     document.getElementById('votesDisplay').innerHTML = '';
     updateVotingUI(votingOrder, currentVoterIndex);
     document.getElementById('finishVotingBtn').style.display = isHost ? 'block' : 'none';
     showScreen('votingScreen');
+    startVotingTimer(); // Muestra timer de tiempo transcurrido
 });
 
 socket.on('voteCast', ({ voterName, votedForName, votingOrder, currentVoterIndex, votingFinished }) => {
@@ -408,6 +443,26 @@ socket.on('playerDisconnected', ({ playersRemaining }) => {
     toast(`Jugador desconectado (${playersRemaining})`);
 });
 
+socket.on('spectatorJoined', ({ username }) => {
+    toast(`${username} se unió como espectador`);
+});
+
+socket.on('reactionReceived', ({ username, emoji }) => {
+    // Mostrar emoji temporalmente cerca del nombre del jugador
+    const msg = document.createElement('div');
+    msg.className = 'reaction-popup';
+    msg.textContent = `${username} ${emoji}`;
+    msg.style.position = 'fixed';
+    msg.style.top = Math.random() * 40 + 20 + '%';
+    msg.style.left = Math.random() * 60 + 20 + '%';
+    msg.style.zIndex = '9999';
+    msg.style.animation = 'fadeOut 2s forwards';
+    msg.style.fontSize = '20px';
+    msg.style.pointerEvents = 'none';
+    document.body.appendChild(msg);
+    setTimeout(() => msg.remove(), 2000);
+});
+
 socket.on('error', msg => {
     toast(msg, 'error');
 });
@@ -417,10 +472,6 @@ socket.on('hostDisconnected', ({ message }) => {
     setTimeout(() => {
         location.reload();
     }, 2000);
-});
-
-socket.on('playerDisconnected', ({ playersRemaining }) => {
-    toast('Un jugador se desconectó', 'info');
 });
 
 // ============================================

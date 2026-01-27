@@ -141,9 +141,34 @@
                     <p id="waitingMessage" class="waiting">Esperando al host...</p>
                 </div>
 
+                <!-- SPECTATOR SCREEN -->
+                <div id="spectatorScreen" class="screen">
+                    <h2>Espectador</h2>
+                    <p class="subtitle">Código de sala: <strong id="roomCodeSpectator"></strong></p>
+                    <div class="card">
+                        <h3>Observando...</h3>
+                        <p class="waiting">Estás viendo la partida como espectador</p>
+                    </div>
+                    <button class="btn btn-ghost" onclick="location.reload()">Salir</button>
+                </div>
+
                 <!-- VOTING SCREEN -->
                 <div id="votingScreen" class="screen">
-                    <h2>Votacion</h2>
+                    <h2>Votación</h2>
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <div style="font-size: 24px; font-weight: bold;" id="votingTimer">0:00</div>
+                        <p class="voting-timer-label">Tiempo transcurrido</p>
+                    </div>
+                    <div style="text-align: center; margin-bottom: 15px;">
+                        <strong>Orden de descripción:</strong>
+                        <div id="descriptionOrderDisplay" style="margin-top: 8px; font-size: 12px;"></div>
+                    </div>
+                    <div class="emoji-reactions" style="text-align: center; margin-bottom: 20px;">
+                        <button class="emoji-btn" onclick="sendReaction('👍')">👍</button>
+                        <button class="emoji-btn" onclick="sendReaction('🤔')">🤔</button>
+                        <button class="emoji-btn" onclick="sendReaction('🚩')">🚩</button>
+                        <button class="emoji-btn" onclick="sendReaction('😂')">😂</button>
+                    </div>
                     <p class="subtitle">Elige a quien eliminar</p>
                     <div class="voting-status" id="votingStatus">
                         <div class="voting-label">Turno de votar</div>

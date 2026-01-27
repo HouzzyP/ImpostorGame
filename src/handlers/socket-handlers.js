@@ -61,8 +61,12 @@ function registerSocketHandlers(io, rooms) {
                 return;
             }
 
+            // Permitir unirse como espectador si el juego ya empezó
             if (room.gameState !== 'waiting') {
-                socket.emit('error', 'El juego ya ha comenzado');
+                socket.join(data.roomCode);
+                console.log(`[${new Date().toLocaleTimeString()}] ${data.username} se unió como espectador a ${data.roomCode}`);
+                socket.emit('roomJoined', { roomCode: data.roomCode, room: getRoomPublicInfo(room), categories: categoryNames, isSpectator: true });
+                io.to(data.roomCode).emit('spectatorJoined', { username: data.username });
                 return;
             }
 
@@ -127,7 +131,12 @@ function registerSocketHandlers(io, rooms) {
                 room.players = assignRoles(room.players, room.config.impostorCount || 1);
                 room.players = assignWordAndCategory(room.players, categoryKey, word);
 
-                io.to(data.roomCode).emit('gameStarted', { category: categoryNames[categoryKey] });
+                // Generar orden aleatorio de descripción (solo jugadores vivos)
+                const alivePlayers = room.players.filter(p => p.alive);
+                const shuffledOrder = [...alivePlayers].sort(() => Math.random() - 0.5);
+                room.descriptionOrder = shuffledOrder.map(p => ({ id: p.id, username: p.username }));
+
+                io.to(data.roomCode).emit('gameStarted', { category: categoryNames[categoryKey], descriptionOrder: room.descriptionOrder });
 
                 // Enviar información privada a cada jugador
                 room.players.forEach(p => {
@@ -163,11 +172,14 @@ function registerSocketHandlers(io, rooms) {
             room.gameState = 'voting';
             room.votingEndTime = Date.now() + room.config.votingTime * 1000;
 
+            // Usar el orden de descripción para la votación
+            const votingOrder = room.descriptionOrder || room.players.filter(p => p.alive).map(p => ({
+                id: p.id,
+                username: p.username
+            }));
+
             io.to(data.roomCode).emit('votingStarted', {
-                votingOrder: room.players.filter(p => p.alive).map(p => ({
-                    id: p.id,
-                    username: p.username
-                })),
+                votingOrder: votingOrder,
                 currentVoterIndex: 0
             });
         });
@@ -178,7 +190,7 @@ function registerSocketHandlers(io, rooms) {
             if (!room || room.gameState !== 'voting') return;
 
             const voter = getPlayerFromRoom(room, socket.id);
-            if (!voter) return;
+            if (!voter || voter.isSpectator) return;
 
             const votedForPlayer = getPlayerFromRoom(room, data.votedFor);
             if (!votedForPlayer || !votedForPlayer.alive) return;
@@ -355,6 +367,22 @@ function registerSocketHandlers(io, rooms) {
             });
             // Actualizar lista de jugadores después de reset
             io.to(data.roomCode).emit('playerListUpdate', room.players);
+        });
+
+        // ========== ENVIAR REACCIÓN (EMOJI) ==========
+        socket.on('sendReaction', (data) => {
+            const room = rooms.get(data.roomCode);
+            if (!room) return;
+
+            const player = getPlayerFromRoom(room, socket.id);
+            if (!player) return;
+
+            // Emitir reacción a todos en la sala
+            io.to(data.roomCode).emit('reactionReceived', {
+                username: player.username,
+                emoji: data.emoji,
+                timestamp: Date.now()
+            });
         });
 
         // ========== DESCONECTAR ==========
