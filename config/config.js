@@ -6,7 +6,7 @@
 
 module.exports = {
     // Puerto del servidor
-    PORT: process.env.PORT || 3000,
+    PORT: process.env.PORT || 3001,
 
     // Socket.IO config
     SOCKET_IO: {

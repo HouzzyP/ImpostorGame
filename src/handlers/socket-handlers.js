@@ -338,6 +338,8 @@ function registerSocketHandlers(io, rooms) {
                     room: getRoomPublicInfo(room),
                     categories: categoryNames
                 });
+                // Actualizar lista de jugadores después de reset
+                io.to(data.roomCode).emit('playerListUpdate', room.players);
             }
         });
 
@@ -351,6 +353,8 @@ function registerSocketHandlers(io, rooms) {
                 room: getRoomPublicInfo(room),
                 categories: categoryNames
             });
+            // Actualizar lista de jugadores después de reset
+            io.to(data.roomCode).emit('playerListUpdate', room.players);
         });
 
         // ========== DESCONECTAR ==========
