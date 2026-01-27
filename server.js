@@ -298,9 +298,9 @@ io.on('connection', (socket) => {
         const room = rooms.get(roomCode);
         if (!room || room.host !== socket.id) return;
         room.config.category = getRandomCategory();
-        io.to(roomCode).emit('configUpdate', { 
-            ...room.config, 
-            categoryName: categoryNames[room.config.category] 
+        io.to(roomCode).emit('configUpdate', {
+            ...room.config,
+            categoryName: categoryNames[room.config.category]
         });
     });
 
@@ -477,6 +477,48 @@ io.on('connection', (socket) => {
 
         io.to(roomCode).emit('gameReset', { categories: categoryNames });
         io.to(roomCode).emit('playerListUpdate', room.players);
+    });
+
+    socket.on('continueInRoom', (roomCode) => {
+        const room = rooms.get(roomCode);
+        if (!room || room.host !== socket.id) return;
+
+        // Reiniciar el juego con los mismos jugadores
+        room.players.forEach(player => {
+            player.word = null;
+            player.isImpostor = false;
+            player.isAlive = true;
+            player.hasVoted = false;
+            player.votedFor = null;
+        });
+
+        const words = wordDatabase[room.config.category];
+        room.currentWord = words[Math.floor(Math.random() * words.length)];
+
+        const playerIndices = room.players.map((_, i) => i);
+        const shuffledIndices = shuffleArray(playerIndices);
+        const impostorIndices = shuffledIndices.slice(0, room.config.impostorCount);
+
+        room.players.forEach((player, index) => {
+            player.isImpostor = impostorIndices.includes(index);
+            player.word = player.isImpostor ? null : room.currentWord;
+        });
+
+        room.gameState = 'playing';
+        room.roundNumber = 1;
+        room.votingOrder = [];
+        room.currentVoterIndex = 0;
+        room.votes = {};
+
+        io.to(roomCode).emit('gameStarted', { category: categoryNames[room.config.category] });
+
+        room.players.forEach(player => {
+            io.to(player.id).emit('yourRole', {
+                isImpostor: player.isImpostor,
+                word: player.word,
+                category: categoryNames[room.config.category]
+            });
+        });
     });
 
     socket.on('disconnect', () => {

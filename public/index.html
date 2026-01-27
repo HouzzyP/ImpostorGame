@@ -1,820 +1,1198 @@
 <!DOCTYPE html>
 <html lang="es" data-theme="dark">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>El Impostor</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <script src="/socket.io/socket.io.js"></script>
-  <style>
-    :root {
-      --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      --radius: 10px;
-      --transition: 0.15s ease;
-    }
-
-    [data-theme="dark"] {
-      --bg-0: #0a0a0a;
-      --bg-1: #141414;
-      --bg-2: #1f1f1f;
-      --bg-3: #2a2a2a;
-      --text-1: #ffffff;
-      --text-2: #a0a0a0;
-      --text-3: #666666;
-      --border: #2a2a2a;
-      --accent: #3b82f6;
-      --accent-hover: #2563eb;
-      --accent-soft: rgba(59, 130, 246, 0.15);
-      --danger: #ef4444;
-      --danger-soft: rgba(239, 68, 68, 0.15);
-      --success: #22c55e;
-      --success-soft: rgba(34, 197, 94, 0.15);
-      --warning: #eab308;
-      --warning-soft: rgba(234, 179, 8, 0.15);
-      --impostor: #ec4899;
-      --impostor-soft: rgba(236, 72, 153, 0.15);
-    }
-
-    [data-theme="light"] {
-      --bg-0: #ffffff;
-      --bg-1: #f5f5f5;
-      --bg-2: #e5e5e5;
-      --bg-3: #d4d4d4;
-      --text-1: #171717;
-      --text-2: #525252;
-      --text-3: #a3a3a3;
-      --border: #e5e5e5;
-      --accent: #2563eb;
-      --accent-hover: #1d4ed8;
-      --accent-soft: rgba(37, 99, 235, 0.1);
-      --danger: #dc2626;
-      --danger-soft: rgba(220, 38, 38, 0.1);
-      --success: #16a34a;
-      --success-soft: rgba(22, 163, 74, 0.1);
-      --warning: #ca8a04;
-      --warning-soft: rgba(202, 138, 4, 0.1);
-      --impostor: #db2777;
-      --impostor-soft: rgba(219, 39, 119, 0.1);
-    }
-
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    
-    body {
-      font-family: var(--font);
-      background: var(--bg-0);
-      color: var(--text-1);
-      min-height: 100vh;
-      transition: background var(--transition), color var(--transition);
-    }
-
-    .app { min-height: 100vh; display: flex; flex-direction: column; }
-
-    header {
-      padding: 14px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid var(--border);
-      background: var(--bg-1);
-    }
-
-    .logo { font-size: 1rem; font-weight: 700; letter-spacing: -0.3px; }
-
-    .theme-btn {
-      width: 36px; height: 36px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      background: var(--bg-2);
-      color: var(--text-2);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all var(--transition);
-    }
-    .theme-btn:hover { background: var(--bg-3); color: var(--text-1); }
-    .theme-btn svg { width: 18px; height: 18px; }
-
-    main {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-
-    .container { width: 100%; max-width: 400px; }
-
-    .screen { display: none; animation: fadeIn 0.2s ease; }
-    .screen.active { display: block; }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(6px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    h1 { font-size: 1.75rem; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 4px; }
-    h2 { font-size: 1.25rem; font-weight: 600; letter-spacing: -0.3px; margin-bottom: 4px; }
-    h3 { font-size: 0.8125rem; font-weight: 600; color: var(--text-2); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
-
-    .subtitle { color: var(--text-3); font-size: 0.9375rem; margin-bottom: 28px; }
-
-    .input-group { margin-bottom: 14px; }
-    .input-group label {
-      display: block;
-      font-size: 0.75rem;
-      font-weight: 500;
-      color: var(--text-2);
-      margin-bottom: 6px;
-    }
-
-    input, select {
-      width: 100%;
-      padding: 11px 14px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: var(--bg-1);
-      color: var(--text-1);
-      font-family: var(--font);
-      font-size: 0.9375rem;
-      transition: all var(--transition);
-    }
-    input:focus, select:focus {
-      outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px var(--accent-soft);
-    }
-    input::placeholder { color: var(--text-3); }
-    select {
-      cursor: pointer;
-      appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23666' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 12px center;
-      padding-right: 36px;
-    }
-
-    .btn {
-      width: 100%;
-      padding: 11px 18px;
-      border: none;
-      border-radius: var(--radius);
-      font-family: var(--font);
-      font-size: 0.875rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all var(--transition);
-    }
-    .btn-primary { background: var(--accent); color: #fff; }
-    .btn-primary:hover { background: var(--accent-hover); }
-    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
-    .btn-secondary { background: var(--bg-2); color: var(--text-1); border: 1px solid var(--border); }
-    .btn-secondary:hover { background: var(--bg-3); }
-    .btn-ghost { background: transparent; color: var(--text-2); }
-    .btn-ghost:hover { color: var(--text-1); }
-    .btn-vote { background: var(--bg-1); color: var(--text-1); border: 1px solid var(--border); margin-bottom: 8px; }
-    .btn-vote:hover { border-color: var(--accent); background: var(--accent-soft); }
-
-    .btn-row { display: flex; gap: 10px; margin-top: 14px; }
-    .btn-row .btn { flex: 1; }
-
-    .card {
-      background: var(--bg-1);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 14px;
-      margin-bottom: 14px;
-    }
-    .card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-    .card-head h3 { margin-bottom: 0; }
-
-    .room-code-box {
-      background: var(--bg-1);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 20px;
-      text-align: center;
-      margin-bottom: 14px;
-      cursor: pointer;
-      transition: all var(--transition);
-    }
-    .room-code-box:hover { border-color: var(--accent); }
-    .room-code-label { font-size: 0.6875rem; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
-    .room-code { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 1.75rem; font-weight: 600; letter-spacing: 4px; color: var(--accent); }
-    .room-code-hint { font-size: 0.6875rem; color: var(--text-3); margin-top: 6px; }
-
-    .toast {
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      padding: 10px 16px;
-      border-radius: var(--radius);
-      font-size: 0.8125rem;
-      font-weight: 500;
-      z-index: 100;
-      animation: slideUp 0.2s ease;
-    }
-    .toast-info { background: var(--bg-3); color: var(--text-1); }
-    .toast-error { background: var(--danger); color: #fff; }
-    @keyframes slideUp {
-      from { opacity: 0; transform: translate(-50%, 6px); }
-      to { opacity: 1; transform: translate(-50%, 0); }
-    }
-
-    .player-list { display: flex; flex-direction: column; gap: 6px; }
-    .player-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px 12px;
-      background: var(--bg-2);
-      border-radius: 8px;
-      border-left: 3px solid transparent;
-    }
-    .player-item.host { border-left-color: var(--accent); }
-    .player-item.dead { opacity: 0.35; }
-    .player-item.dead .player-name { text-decoration: line-through; }
-    .player-name { font-size: 0.875rem; font-weight: 500; }
-    .badge {
-      font-size: 0.625rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      padding: 3px 6px;
-      border-radius: 4px;
-      background: var(--accent-soft);
-      color: var(--accent);
-    }
-    .count { color: var(--text-3); font-size: 0.8125rem; }
-
-    .config-row { display: flex; gap: 10px; }
-    .config-row > * { flex: 1; }
-    .random-btn {
-      margin-top: 12px;
-      background: transparent;
-      border: 1px dashed var(--border);
-      color: var(--text-2);
-      font-size: 0.8125rem;
-    }
-    .random-btn:hover { border-color: var(--accent); color: var(--accent); }
-
-    .role-card {
-      text-align: center;
-      padding: 36px 20px;
-      border-radius: var(--radius);
-      margin-bottom: 14px;
-    }
-    .role-card.innocent { background: var(--accent-soft); border: 1px solid var(--accent); }
-    .role-card.impostor { background: var(--impostor-soft); border: 1px solid var(--impostor); }
-    .role-label { font-size: 0.6875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
-    .role-card.innocent .role-label { color: var(--accent); }
-    .role-card.impostor .role-label { color: var(--impostor); }
-    .role-title { font-size: 1.125rem; font-weight: 700; margin-bottom: 12px; }
-    .role-card.innocent .role-title { color: var(--accent); }
-    .role-card.impostor .role-title { color: var(--impostor); }
-    .word-display { font-size: 1.75rem; font-weight: 700; margin-bottom: 10px; }
-    .role-hint { color: var(--text-2); font-size: 0.8125rem; }
-    .category-tag { font-size: 0.75rem; color: var(--text-3); margin-top: 10px; }
-
-    .voting-status {
-      background: var(--warning-soft);
-      border: 1px solid var(--warning);
-      border-radius: var(--radius);
-      padding: 12px;
-      text-align: center;
-      margin-bottom: 14px;
-    }
-    .voting-status.my-turn { background: var(--accent-soft); border-color: var(--accent); }
-    .voting-label { font-size: 0.625rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--warning); margin-bottom: 2px; }
-    .voting-status.my-turn .voting-label { color: var(--accent); }
-    .voting-text { font-weight: 600; font-size: 0.9375rem; }
-
-    .votes-log { max-height: 160px; overflow-y: auto; }
-    .vote-entry {
-      padding: 8px 10px;
-      background: var(--bg-2);
-      border-radius: 6px;
-      font-size: 0.8125rem;
-      margin-bottom: 6px;
-    }
-    .vote-entry span { color: var(--accent); font-weight: 600; }
-
-    .result-banner {
-      text-align: center;
-      padding: 36px 20px;
-      border-radius: var(--radius);
-      margin-bottom: 14px;
-    }
-    .result-banner.eliminated { background: var(--danger-soft); border: 1px solid var(--danger); }
-    .result-banner.eliminated h2 { color: var(--danger); }
-    .result-banner.tie { background: var(--warning-soft); border: 1px solid var(--warning); }
-    .result-banner.tie h2 { color: var(--warning); }
-    .result-banner.innocents { background: var(--success-soft); border: 1px solid var(--success); }
-    .result-banner.innocents h2 { color: var(--success); }
-    .result-banner.impostors { background: var(--impostor-soft); border: 1px solid var(--impostor); }
-    .result-banner.impostors h2 { color: var(--impostor); }
-    .result-sub { color: var(--text-2); font-size: 0.875rem; margin-top: 4px; }
-
-    .reveal-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px 12px;
-      background: var(--bg-2);
-      border-radius: 6px;
-      margin-bottom: 6px;
-    }
-    .reveal-item.impostor { background: var(--impostor-soft); }
-    .reveal-role {
-      font-size: 0.625rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      padding: 3px 6px;
-      border-radius: 4px;
-    }
-    .reveal-item.impostor .reveal-role { background: var(--impostor); color: #fff; }
-    .reveal-item:not(.impostor) .reveal-role { background: var(--success-soft); color: var(--success); }
-
-    .word-reveal {
-      background: var(--bg-1);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 14px;
-      text-align: center;
-      margin-bottom: 14px;
-    }
-    .word-reveal-label { font-size: 0.6875rem; color: var(--text-3); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
-    .word-reveal-word { font-size: 1.25rem; font-weight: 700; color: var(--accent); }
-
-    .round-badge {
-      text-align: center;
-      padding: 8px;
-      background: var(--bg-1);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      margin-bottom: 14px;
-      font-size: 0.8125rem;
-      color: var(--text-2);
-    }
-    .round-badge strong { color: var(--text-1); }
-
-    .waiting { text-align: center; color: var(--text-3); font-size: 0.875rem; padding: 20px 0; }
-    .hint { text-align: center; color: var(--text-3); font-size: 0.6875rem; margin-top: 6px; }
-
-    @media (max-width: 480px) {
-      header { padding: 12px 16px; }
-      main { padding: 16px; }
-      h1 { font-size: 1.5rem; }
-      .room-code { font-size: 1.5rem; letter-spacing: 3px; }
-      .word-display { font-size: 1.5rem; }
-      .config-row { flex-direction: column; gap: 0; }
-    }
-  </style>
-</head>
-<body>
-  <div class="app">
-    <header>
-      <div class="logo">El Impostor</div>
-      <button class="theme-btn" onclick="toggleTheme()" title="Cambiar tema">
-        <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
-        </svg>
-        <svg class="icon-moon" style="display:none" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
-        </svg>
-      </button>
-    </header>
-
-    <main>
-      <div class="container">
-
-        <div id="homeScreen" class="screen active">
-          <h1>El Impostor</h1>
-          <p class="subtitle">Encuentra al impostor entre tus amigos</p>
-          <div class="input-group">
-            <label>Tu nombre</label>
-            <input type="text" id="playerNameInput" placeholder="Ingresa tu nombre" maxlength="15" autocomplete="off">
-          </div>
-          <button class="btn btn-primary" onclick="createRoom()">Crear sala</button>
-          <div class="btn-row">
-            <button class="btn btn-secondary" onclick="showJoinScreen()">Unirse a sala</button>
-          </div>
-        </div>
-
-        <div id="joinScreen" class="screen">
-          <h1>Unirse</h1>
-          <p class="subtitle">Ingresa el codigo de la sala</p>
-          <div class="input-group">
-            <label>Tu nombre</label>
-            <input type="text" id="joinNameInput" placeholder="Ingresa tu nombre" maxlength="15" autocomplete="off">
-          </div>
-          <div class="input-group">
-            <label>Codigo de sala</label>
-            <input type="text" id="roomCodeInput" placeholder="ABC123" maxlength="6" autocomplete="off" style="text-transform:uppercase">
-          </div>
-          <button class="btn btn-primary" onclick="joinRoom()">Unirse</button>
-          <div class="btn-row">
-            <button class="btn btn-ghost" onclick="showHomeScreen()">Volver</button>
-          </div>
-        </div>
-
-        <div id="lobbyHostScreen" class="screen">
-          <div class="room-code-box" onclick="copyRoomCode()">
-            <div class="room-code-label">Codigo de sala</div>
-            <div class="room-code" id="roomCodeDisplay"></div>
-            <div class="room-code-hint">Toca para copiar</div>
-          </div>
-          <div class="card">
-            <div class="card-head">
-              <h3>Jugadores</h3>
-              <span class="count"><span id="playerCount">1</span>/12</span>
-            </div>
-            <div class="player-list" id="playerListHost"></div>
-          </div>
-          <div class="card">
-            <h3>Configuracion</h3>
-            <div class="config-row">
-              <div class="input-group" style="margin-bottom:0">
-                <label>Categoria</label>
-                <select id="categorySelect" onchange="updateConfig()"></select>
-              </div>
-              <div class="input-group" style="margin-bottom:0">
-                <label>Impostores</label>
-                <select id="impostorCountSelect" onchange="updateConfig()">
-                  <option value="1">1</option>
-                  <option value="2">2</option>
-                  <option value="3">3</option>
-                  <option value="4">4</option>
-                  <option value="5">5</option>
-                  <option value="6">6</option>
-                </select>
-              </div>
-            </div>
-            <button class="btn random-btn" onclick="randomCategory()">Categoria aleatoria</button>
-          </div>
-          <button class="btn btn-primary" id="startButton" onclick="startGame()" disabled>Iniciar partida</button>
-          <p class="hint">Minimo 4 jugadores</p>
-        </div>
-
-        <div id="lobbyPlayerScreen" class="screen">
-          <div class="room-code-box" onclick="copyRoomCode()">
-            <div class="room-code-label">Codigo de sala</div>
-            <div class="room-code" id="roomCodePlayer"></div>
-            <div class="room-code-hint">Toca para copiar</div>
-          </div>
-          <div class="card">
-            <div class="card-head">
-              <h3>Jugadores</h3>
-              <span class="count"><span id="playerCountPlayer">1</span>/12</span>
-            </div>
-            <div class="player-list" id="playerListPlayer"></div>
-          </div>
-          <div class="card">
-            <p class="waiting">Esperando al host...</p>
-          </div>
-        </div>
-
-        <div id="roleScreen" class="screen">
-          <div id="roleCard" class="role-card innocent">
-            <div class="role-label">Tu rol</div>
-            <div class="role-title" id="roleTitle">Inocente</div>
-            <div class="word-display" id="wordDisplay"></div>
-            <p class="role-hint" id="roleHint"></p>
-            <p class="category-tag" id="categoryTag"></p>
-          </div>
-          <button class="btn btn-primary" id="readyButton" onclick="startVoting()" style="display:none">Iniciar votacion</button>
-          <p id="waitingMessage" class="waiting">Esperando al host...</p>
-        </div>
-
-        <div id="votingScreen" class="screen">
-          <h2>Votacion</h2>
-          <p class="subtitle">Elige a quien eliminar</p>
-          <div class="voting-status" id="votingStatus">
-            <div class="voting-label">Turno de votar</div>
-            <div class="voting-text" id="currentVoterDisplay"></div>
-          </div>
-          <div class="card">
-            <h3>Votos</h3>
-            <div class="votes-log" id="votesDisplay"></div>
-          </div>
-          <div id="votingButtons"></div>
-        </div>
-
-        <div id="eliminationScreen" class="screen">
-          <div class="result-banner eliminated">
-            <h2 id="eliminatedName"></h2>
-            <p class="result-sub" id="eliminatedRole"></p>
-          </div>
-          <button class="btn btn-primary" onclick="continueGame()">Continuar</button>
-        </div>
-
-        <div id="gameScreen" class="screen">
-          <div id="roleCardGame" class="role-card innocent">
-            <div class="role-label">Tu rol</div>
-            <div class="role-title" id="roleTitleGame">Inocente</div>
-            <div class="word-display" id="wordDisplayGame"></div>
-            <p class="role-hint" id="roleHintGame"></p>
-          </div>
-          <div class="round-badge">Ronda <strong id="roundNumber">1</strong></div>
-          <div class="card">
-            <h3>Jugadores vivos</h3>
-            <div class="player-list" id="alivePlayersList"></div>
-          </div>
-          <button class="btn btn-primary" id="startVotingBtn" onclick="startVoting()" style="display:none">Iniciar votacion</button>
-          <p id="waitingVoteMessage" class="waiting">Esperando al host...</p>
-        </div>
-
-        <div id="endScreen" class="screen">
-          <div class="result-banner" id="winnerBanner">
-            <h2 id="winnerTitle"></h2>
-            <p class="result-sub" id="winnerMessage"></p>
-          </div>
-          <div class="word-reveal">
-            <div class="word-reveal-label">La palabra era</div>
-            <div class="word-reveal-word" id="revealedWord"></div>
-          </div>
-          <div class="card">
-            <h3>Roles revelados</h3>
-            <div id="finalPlayerList"></div>
-          </div>
-          <button class="btn btn-primary" onclick="resetGame()" id="resetButton" style="display:none">Nueva partida</button>
-          <button class="btn btn-secondary" onclick="location.reload()" style="margin-top:10px">Salir</button>
-        </div>
-
-      </div>
-    </main>
-  </div>
-
-  <div id="toastContainer"></div>
-
-  <script>
-    const socket = io();
-    let currentRoom = null;
-    let myPlayerId = null;
-    let isHost = false;
-    let myRole = null;
-    let categories = {};
-
-    // Theme
-    function toggleTheme() {
-      const html = document.documentElement;
-      const newTheme = html.dataset.theme === 'dark' ? 'light' : 'dark';
-      html.dataset.theme = newTheme;
-      localStorage.setItem('theme', newTheme);
-      updateThemeIcon(newTheme);
-    }
-
-    function updateThemeIcon(theme) {
-      document.querySelector('.icon-sun').style.display = theme === 'dark' ? 'block' : 'none';
-      document.querySelector('.icon-moon').style.display = theme === 'light' ? 'block' : 'none';
-    }
-
-    const savedTheme = localStorage.getItem('theme') || 'dark';
-    document.documentElement.dataset.theme = savedTheme;
-    updateThemeIcon(savedTheme);
-
-    // Screens
-    function showScreen(id) {
-      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-      document.getElementById(id).classList.add('active');
-    }
-    function showHomeScreen() { showScreen('homeScreen'); }
-    function showJoinScreen() {
-      const name = document.getElementById('playerNameInput').value.trim();
-      if (name) document.getElementById('joinNameInput').value = name;
-      showScreen('joinScreen');
-    }
-
-    // Toast
-    function toast(msg, type = 'info') {
-      const t = document.createElement('div');
-      t.className = 'toast toast-' + type;
-      t.textContent = msg;
-      document.getElementById('toastContainer').appendChild(t);
-      setTimeout(() => t.remove(), 2500);
-    }
-
-    // Room
-    function copyRoomCode() {
-      if (currentRoom) {
-        navigator.clipboard.writeText(currentRoom)
-          .then(() => toast('Codigo copiado'))
-          .catch(() => toast('No se pudo copiar', 'error'));
-      }
-    }
-
-    function createRoom() {
-      const name = document.getElementById('playerNameInput').value.trim();
-      if (!name) return toast('Ingresa tu nombre', 'error');
-      socket.emit('createRoom', name);
-    }
-
-    function joinRoom() {
-      const name = document.getElementById('joinNameInput').value.trim();
-      const code = document.getElementById('roomCodeInput').value.trim().toUpperCase();
-      if (!name || !code) return toast('Completa todos los campos', 'error');
-      socket.emit('joinRoom', { roomCode: code, playerName: name });
-    }
-
-    function populateCategories(cats) {
-      categories = cats;
-      const select = document.getElementById('categorySelect');
-      select.innerHTML = '';
-      for (const [key, name] of Object.entries(cats)) {
-        const opt = document.createElement('option');
-        opt.value = key;
-        opt.textContent = name;
-        select.appendChild(opt);
-      }
-    }
-
-    function updateConfig() {
-      socket.emit('updateConfig', {
-        roomCode: currentRoom,
-        config: {
-          category: document.getElementById('categorySelect').value,
-          impostorCount: parseInt(document.getElementById('impostorCountSelect').value)
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>El Impostor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        :root {
+            --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --radius: 10px;
+            --transition: 0.15s ease;
         }
-      });
-    }
 
-    function randomCategory() { socket.emit('randomCategory', currentRoom); }
-    function startGame() { socket.emit('startGame', currentRoom); }
-    function startVoting() { socket.emit('startVoting', currentRoom); }
-    function castVote(id) { socket.emit('castVote', { roomCode: currentRoom, votedForId: id }); }
-    function continueGame() { showScreen('gameScreen'); }
-    function resetGame() { socket.emit('resetGame', currentRoom); }
+        [data-theme="dark"] {
+            --bg-0: #0a0a0a;
+            --bg-1: #141414;
+            --bg-2: #1f1f1f;
+            --bg-3: #2a2a2a;
+            --text-1: #ffffff;
+            --text-2: #a0a0a0;
+            --text-3: #666666;
+            --border: #2a2a2a;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --accent-soft: rgba(59, 130, 246, 0.15);
+            --danger: #ef4444;
+            --danger-soft: rgba(239, 68, 68, 0.15);
+            --success: #22c55e;
+            --success-soft: rgba(34, 197, 94, 0.15);
+            --warning: #eab308;
+            --warning-soft: rgba(234, 179, 8, 0.15);
+            --impostor: #ec4899;
+            --impostor-soft: rgba(236, 72, 153, 0.15);
+        }
 
-    function escapeHtml(text) {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
-    }
+        [data-theme="light"] {
+            --bg-0: #ffffff;
+            --bg-1: #f5f5f5;
+            --bg-2: #e5e5e5;
+            --bg-3: #d4d4d4;
+            --text-1: #171717;
+            --text-2: #525252;
+            --text-3: #a3a3a3;
+            --border: #e5e5e5;
+            --accent: #2563eb;
+            --accent-hover: #1d4ed8;
+            --accent-soft: rgba(37, 99, 235, 0.1);
+            --danger: #dc2626;
+            --danger-soft: rgba(220, 38, 38, 0.1);
+            --success: #16a34a;
+            --success-soft: rgba(22, 163, 74, 0.1);
+            --warning: #ca8a04;
+            --warning-soft: rgba(202, 138, 4, 0.1);
+            --impostor: #db2777;
+            --impostor-soft: rgba(219, 39, 119, 0.1);
+        }
 
-    function renderPlayerList(players, elementId) {
-      document.getElementById(elementId).innerHTML = players.map(p => `
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font);
+            background: var(--bg-0);
+            color: var(--text-1);
+            min-height: 100vh;
+            transition: background var(--transition), color var(--transition);
+        }
+
+        .app {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            padding: 14px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-1);
+        }
+
+        .logo {
+            font-size: 1rem;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+
+        .theme-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--bg-2);
+            color: var(--text-2);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--transition);
+        }
+
+        .theme-btn:hover {
+            background: var(--bg-3);
+            color: var(--text-1);
+        }
+
+        .theme-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .screen {
+            display: none;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(6px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin-bottom: 4px;
+        }
+
+        h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+            margin-bottom: 4px;
+        }
+
+        h3 {
+            font-size: 0.8125rem;
+            font-weight: 600;
+            color: var(--text-2);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .subtitle {
+            color: var(--text-3);
+            font-size: 0.9375rem;
+            margin-bottom: 28px;
+        }
+
+        .input-group {
+            margin-bottom: 14px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text-2);
+            margin-bottom: 6px;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--bg-1);
+            color: var(--text-1);
+            font-family: var(--font);
+            font-size: 0.9375rem;
+            transition: all var(--transition);
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-soft);
+        }
+
+        input::placeholder {
+            color: var(--text-3);
+        }
+
+        select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23666' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 36px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 11px 18px;
+            border: none;
+            border-radius: var(--radius);
+            font-family: var(--font);
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: var(--bg-2);
+            color: var(--text-1);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-3);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--text-2);
+        }
+
+        .btn-ghost:hover {
+            color: var(--text-1);
+        }
+
+        .btn-vote {
+            background: var(--bg-1);
+            color: var(--text-1);
+            border: 1px solid var(--border);
+            margin-bottom: 8px;
+        }
+
+        .btn-vote:hover {
+            border-color: var(--accent);
+            background: var(--accent-soft);
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .btn-row .btn {
+            flex: 1;
+        }
+
+        .card {
+            background: var(--bg-1);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 14px;
+            margin-bottom: 14px;
+        }
+
+        .card-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .card-head h3 {
+            margin-bottom: 0;
+        }
+
+        .room-code-box {
+            background: var(--bg-1);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 14px;
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+
+        .room-code-box:hover {
+            border-color: var(--accent);
+        }
+
+        .room-code-label {
+            font-size: 0.6875rem;
+            font-weight: 600;
+            color: var(--text-3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+        }
+
+        .room-code {
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 1.75rem;
+            font-weight: 600;
+            letter-spacing: 4px;
+            color: var(--accent);
+        }
+
+        .room-code-hint {
+            font-size: 0.6875rem;
+            color: var(--text-3);
+            margin-top: 6px;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 10px 16px;
+            border-radius: var(--radius);
+            font-size: 0.8125rem;
+            font-weight: 500;
+            z-index: 100;
+            animation: slideUp 0.2s ease;
+        }
+
+        .toast-info {
+            background: var(--bg-3);
+            color: var(--text-1);
+        }
+
+        .toast-error {
+            background: var(--danger);
+            color: #fff;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translate(-50%, 6px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translate(-50%, 0);
+            }
+        }
+
+        .player-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .player-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            background: var(--bg-2);
+            border-radius: 8px;
+            border-left: 3px solid transparent;
+        }
+
+        .player-item.host {
+            border-left-color: var(--accent);
+        }
+
+        .player-item.dead {
+            opacity: 0.35;
+        }
+
+        .player-item.dead .player-name {
+            text-decoration: line-through;
+        }
+
+        .player-name {
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .badge {
+            font-size: 0.625rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            padding: 3px 6px;
+            border-radius: 4px;
+            background: var(--accent-soft);
+            color: var(--accent);
+        }
+
+        .count {
+            color: var(--text-3);
+            font-size: 0.8125rem;
+        }
+
+        .config-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .config-row>* {
+            flex: 1;
+        }
+
+        .random-btn {
+            margin-top: 12px;
+            background: transparent;
+            border: 1px dashed var(--border);
+            color: var(--text-2);
+            font-size: 0.8125rem;
+        }
+
+        .random-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .role-card {
+            text-align: center;
+            padding: 36px 20px;
+            border-radius: var(--radius);
+            margin-bottom: 14px;
+        }
+
+        .role-card.innocent {
+            background: var(--accent-soft);
+            border: 1px solid var(--accent);
+        }
+
+        .role-card.impostor {
+            background: var(--impostor-soft);
+            border: 1px solid var(--impostor);
+        }
+
+        .role-label {
+            font-size: 0.6875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+
+        .role-card.innocent .role-label {
+            color: var(--accent);
+        }
+
+        .role-card.impostor .role-label {
+            color: var(--impostor);
+        }
+
+        .role-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .role-card.innocent .role-title {
+            color: var(--accent);
+        }
+
+        .role-card.impostor .role-title {
+            color: var(--impostor);
+        }
+
+        .word-display {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .role-hint {
+            color: var(--text-2);
+            font-size: 0.8125rem;
+        }
+
+        .category-tag {
+            font-size: 0.75rem;
+            color: var(--text-3);
+            margin-top: 10px;
+        }
+
+        .voting-status {
+            background: var(--warning-soft);
+            border: 1px solid var(--warning);
+            border-radius: var(--radius);
+            padding: 12px;
+            text-align: center;
+            margin-bottom: 14px;
+        }
+
+        .voting-status.my-turn {
+            background: var(--accent-soft);
+            border-color: var(--accent);
+        }
+
+        .voting-label {
+            font-size: 0.625rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--warning);
+            margin-bottom: 2px;
+        }
+
+        .voting-status.my-turn .voting-label {
+            color: var(--accent);
+        }
+
+        .voting-text {
+            font-weight: 600;
+            font-size: 0.9375rem;
+        }
+
+        .votes-log {
+            max-height: 160px;
+            overflow-y: auto;
+        }
+
+        .vote-entry {
+            padding: 8px 10px;
+            background: var(--bg-2);
+            border-radius: 6px;
+            font-size: 0.8125rem;
+            margin-bottom: 6px;
+        }
+
+        .vote-entry span {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .result-banner {
+            text-align: center;
+            padding: 36px 20px;
+            border-radius: var(--radius);
+            margin-bottom: 14px;
+        }
+
+        .result-banner.eliminated {
+            background: var(--danger-soft);
+            border: 1px solid var(--danger);
+        }
+
+        .result-banner.eliminated h2 {
+            color: var(--danger);
+        }
+
+        .result-banner.tie {
+            background: var(--warning-soft);
+            border: 1px solid var(--warning);
+        }
+
+        .result-banner.tie h2 {
+            color: var(--warning);
+        }
+
+        .result-banner.innocents {
+            background: var(--success-soft);
+            border: 1px solid var(--success);
+        }
+
+        .result-banner.innocents h2 {
+            color: var(--success);
+        }
+
+        .result-banner.impostors {
+            background: var(--impostor-soft);
+            border: 1px solid var(--impostor);
+        }
+
+        .result-banner.impostors h2 {
+            color: var(--impostor);
+        }
+
+        .result-sub {
+            color: var(--text-2);
+            font-size: 0.875rem;
+            margin-top: 4px;
+        }
+
+        .reveal-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            background: var(--bg-2);
+            border-radius: 6px;
+            margin-bottom: 6px;
+        }
+
+        .reveal-item.impostor {
+            background: var(--impostor-soft);
+        }
+
+        .reveal-role {
+            font-size: 0.625rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            padding: 3px 6px;
+            border-radius: 4px;
+        }
+
+        .reveal-item.impostor .reveal-role {
+            background: var(--impostor);
+            color: #fff;
+        }
+
+        .reveal-item:not(.impostor) .reveal-role {
+            background: var(--success-soft);
+            color: var(--success);
+        }
+
+        .word-reveal {
+            background: var(--bg-1);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 14px;
+            text-align: center;
+            margin-bottom: 14px;
+        }
+
+        .word-reveal-label {
+            font-size: 0.6875rem;
+            color: var(--text-3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+
+        .word-reveal-word {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .round-badge {
+            text-align: center;
+            padding: 8px;
+            background: var(--bg-1);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            margin-bottom: 14px;
+            font-size: 0.8125rem;
+            color: var(--text-2);
+        }
+
+        .round-badge strong {
+            color: var(--text-1);
+        }
+
+        .waiting {
+            text-align: center;
+            color: var(--text-3);
+            font-size: 0.875rem;
+            padding: 20px 0;
+        }
+
+        .hint {
+            text-align: center;
+            color: var(--text-3);
+            font-size: 0.6875rem;
+            margin-top: 6px;
+        }
+
+        @media (max-width: 480px) {
+            header {
+                padding: 12px 16px;
+            }
+
+            main {
+                padding: 16px;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .room-code {
+                font-size: 1.5rem;
+                letter-spacing: 3px;
+            }
+
+            .word-display {
+                font-size: 1.5rem;
+            }
+
+            .config-row {
+                flex-direction: column;
+                gap: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app">
+        <header>
+            <div class="logo">El Impostor</div>
+            <button class="theme-btn" onclick="toggleTheme()" title="Cambiar tema">
+                <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+                <svg class="icon-moon" style="display:none" xmlns="http://www.w3.org/2000/svg" fill="none"
+                    viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+            </button>
+        </header>
+
+        <main>
+            <div class="container">
+
+                <div id="homeScreen" class="screen active">
+                    <h1>El Impostor</h1>
+                    <p class="subtitle">Encuentra al impostor entre tus amigos</p>
+                    <div class="input-group">
+                        <label>Tu nombre</label>
+                        <input type="text" id="playerNameInput" placeholder="Ingresa tu nombre" maxlength="15"
+                            autocomplete="off">
+                    </div>
+                    <button class="btn btn-primary" onclick="createRoom()">Crear sala</button>
+                    <div class="btn-row">
+                        <button class="btn btn-secondary" onclick="showJoinScreen()">Unirse a sala</button>
+                    </div>
+                </div>
+
+                <div id="joinScreen" class="screen">
+                    <h1>Unirse</h1>
+                    <p class="subtitle">Ingresa el codigo de la sala</p>
+                    <div class="input-group">
+                        <label>Tu nombre</label>
+                        <input type="text" id="joinNameInput" placeholder="Ingresa tu nombre" maxlength="15"
+                            autocomplete="off">
+                    </div>
+                    <div class="input-group">
+                        <label>Codigo de sala</label>
+                        <input type="text" id="roomCodeInput" placeholder="ABC123" maxlength="6" autocomplete="off"
+                            style="text-transform:uppercase">
+                    </div>
+                    <button class="btn btn-primary" onclick="joinRoom()">Unirse</button>
+                    <div class="btn-row">
+                        <button class="btn btn-ghost" onclick="showHomeScreen()">Volver</button>
+                    </div>
+                </div>
+
+                <div id="lobbyHostScreen" class="screen">
+                    <div class="room-code-box" onclick="copyRoomCode()">
+                        <div class="room-code-label">Codigo de sala</div>
+                        <div class="room-code" id="roomCodeDisplay"></div>
+                        <div class="room-code-hint">Toca para copiar</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-head">
+                            <h3>Jugadores</h3>
+                            <span class="count"><span id="playerCount">1</span>/12</span>
+                        </div>
+                        <div class="player-list" id="playerListHost"></div>
+                    </div>
+                    <div class="card">
+                        <h3>Configuracion</h3>
+                        <div class="config-row">
+                            <div class="input-group" style="margin-bottom:0">
+                                <label>Categoria</label>
+                                <select id="categorySelect" onchange="updateConfig()"></select>
+                            </div>
+                            <div class="input-group" style="margin-bottom:0">
+                                <label>Impostores</label>
+                                <select id="impostorCountSelect" onchange="updateConfig()">
+                                    <option value="1">1</option>
+                                    <option value="2">2</option>
+                                    <option value="3">3</option>
+                                    <option value="4">4</option>
+                                    <option value="5">5</option>
+                                    <option value="6">6</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button class="btn random-btn" onclick="randomCategory()">Categoria aleatoria</button>
+                    </div>
+                    <button class="btn btn-primary" id="startButton" onclick="startGame()" disabled>Iniciar
+                        partida</button>
+                    <p class="hint">Minimo 4 jugadores</p>
+                </div>
+
+                <div id="lobbyPlayerScreen" class="screen">
+                    <div class="room-code-box" onclick="copyRoomCode()">
+                        <div class="room-code-label">Codigo de sala</div>
+                        <div class="room-code" id="roomCodePlayer"></div>
+                        <div class="room-code-hint">Toca para copiar</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-head">
+                            <h3>Jugadores</h3>
+                            <span class="count"><span id="playerCountPlayer">1</span>/12</span>
+                        </div>
+                        <div class="player-list" id="playerListPlayer"></div>
+                    </div>
+                    <div class="card">
+                        <p class="waiting">Esperando al host...</p>
+                    </div>
+                </div>
+
+                <div id="roleScreen" class="screen">
+                    <div id="roleCard" class="role-card innocent">
+                        <div class="role-label">Tu rol</div>
+                        <div class="role-title" id="roleTitle">Inocente</div>
+                        <div class="word-display" id="wordDisplay"></div>
+                        <p class="role-hint" id="roleHint"></p>
+                        <p class="category-tag" id="categoryTag"></p>
+                    </div>
+                    <button class="btn btn-primary" id="readyButton" onclick="startVoting()"
+                        style="display:none">Iniciar votacion</button>
+                    <p id="waitingMessage" class="waiting">Esperando al host...</p>
+                </div>
+
+                <div id="votingScreen" class="screen">
+                    <h2>Votacion</h2>
+                    <p class="subtitle">Elige a quien eliminar</p>
+                    <div class="voting-status" id="votingStatus">
+                        <div class="voting-label">Turno de votar</div>
+                        <div class="voting-text" id="currentVoterDisplay"></div>
+                    </div>
+                    <div class="card">
+                        <h3>Votos</h3>
+                        <div class="votes-log" id="votesDisplay"></div>
+                    </div>
+                    <div id="votingButtons"></div>
+                </div>
+
+                <div id="eliminationScreen" class="screen">
+                    <div class="result-banner eliminated">
+                        <h2 id="eliminatedName"></h2>
+                        <p class="result-sub" id="eliminatedRole"></p>
+                    </div>
+                    <button class="btn btn-primary" onclick="continueGame()">Continuar</button>
+                </div>
+
+                <div id="gameScreen" class="screen">
+                    <div id="roleCardGame" class="role-card innocent">
+                        <div class="role-label">Tu rol</div>
+                        <div class="role-title" id="roleTitleGame">Inocente</div>
+                        <div class="word-display" id="wordDisplayGame"></div>
+                        <p class="role-hint" id="roleHintGame"></p>
+                    </div>
+                    <div class="round-badge">Ronda <strong id="roundNumber">1</strong></div>
+                    <div class="card">
+                        <h3>Jugadores vivos</h3>
+                        <div class="player-list" id="alivePlayersList"></div>
+                    </div>
+                    <button class="btn btn-primary" id="startVotingBtn" onclick="startVoting()"
+                        style="display:none">Iniciar votacion</button>
+                    <p id="waitingVoteMessage" class="waiting">Esperando al host...</p>
+                </div>
+
+                <div id="endScreen" class="screen">
+                    <div class="result-banner" id="winnerBanner">
+                        <h2 id="winnerTitle"></h2>
+                        <p class="result-sub" id="winnerMessage"></p>
+                    </div>
+                    <div class="word-reveal">
+                        <div class="word-reveal-label">La palabra era</div>
+                        <div class="word-reveal-word" id="revealedWord"></div>
+                    </div>
+                    <div class="card">
+                        <h3>Roles revelados</h3>
+                        <div id="finalPlayerList"></div>
+                    </div>
+                    <div class="button-group" style="display:flex; gap:10px; flex-wrap:wrap;">
+                        <button class="btn btn-primary" onclick="continueInRoom()" id="continueButton"
+                            style="display:none">Continuar en la sala</button>
+                        <button class="btn btn-secondary" onclick="resetGame()" id="resetButton"
+                            style="display:none">Volver al lobby</button>
+                        <button class="btn btn-secondary" onclick="location.reload()" style="flex:1">Salir</button>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <div id="toastContainer"></div>
+
+    <script>
+        const socket = io();
+        let currentRoom = null;
+        let myPlayerId = null;
+        let isHost = false;
+        let myRole = null;
+        let categories = {};
+
+        // Theme
+        function toggleTheme() {
+            const html = document.documentElement;
+            const newTheme = html.dataset.theme === 'dark' ? 'light' : 'dark';
+            html.dataset.theme = newTheme;
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(newTheme);
+        }
+
+        function updateThemeIcon(theme) {
+            document.querySelector('.icon-sun').style.display = theme === 'dark' ? 'block' : 'none';
+            document.querySelector('.icon-moon').style.display = theme === 'light' ? 'block' : 'none';
+        }
+
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        document.documentElement.dataset.theme = savedTheme;
+        updateThemeIcon(savedTheme);
+
+        // Screens
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+        function showHomeScreen() { showScreen('homeScreen'); }
+        function showJoinScreen() {
+            const name = document.getElementById('playerNameInput').value.trim();
+            if (name) document.getElementById('joinNameInput').value = name;
+            showScreen('joinScreen');
+        }
+
+        // Toast
+        function toast(msg, type = 'info') {
+            const t = document.createElement('div');
+            t.className = 'toast toast-' + type;
+            t.textContent = msg;
+            document.getElementById('toastContainer').appendChild(t);
+            setTimeout(() => t.remove(), 2500);
+        }
+
+        // Room
+        function copyRoomCode() {
+            if (currentRoom) {
+                navigator.clipboard.writeText(currentRoom)
+                    .then(() => toast('Codigo copiado'))
+                    .catch(() => toast('No se pudo copiar', 'error'));
+            }
+        }
+
+        function createRoom() {
+            const name = document.getElementById('playerNameInput').value.trim();
+            if (!name) return toast('Ingresa tu nombre', 'error');
+            socket.emit('createRoom', name);
+        }
+
+        function joinRoom() {
+            const name = document.getElementById('joinNameInput').value.trim();
+            const code = document.getElementById('roomCodeInput').value.trim().toUpperCase();
+            if (!name || !code) return toast('Completa todos los campos', 'error');
+            socket.emit('joinRoom', { roomCode: code, playerName: name });
+        }
+
+        function populateCategories(cats) {
+            categories = cats;
+            const select = document.getElementById('categorySelect');
+            select.innerHTML = '';
+            for (const [key, name] of Object.entries(cats)) {
+                const opt = document.createElement('option');
+                opt.value = key;
+                opt.textContent = name;
+                select.appendChild(opt);
+            }
+        }
+
+        function updateConfig() {
+            socket.emit('updateConfig', {
+                roomCode: currentRoom,
+                config: {
+                    category: document.getElementById('categorySelect').value,
+                    impostorCount: parseInt(document.getElementById('impostorCountSelect').value)
+                }
+            });
+        }
+
+        function randomCategory() { socket.emit('randomCategory', currentRoom); }
+        function startGame() { socket.emit('startGame', currentRoom); }
+        function startVoting() { socket.emit('startVoting', currentRoom); }
+        function castVote(id) { socket.emit('castVote', { roomCode: currentRoom, votedForId: id }); }
+        function continueGame() { showScreen('gameScreen'); }
+        function continueInRoom() { socket.emit('continueInRoom', currentRoom); }
+        function resetGame() { socket.emit('resetGame', currentRoom); }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function renderPlayerList(players, elementId) {
+            document.getElementById(elementId).innerHTML = players.map(p => `
         <div class="player-item ${p.isHost ? 'host' : ''} ${!p.isAlive ? 'dead' : ''}">
           <span class="player-name">${escapeHtml(p.name)}</span>
           ${p.isHost ? '<span class="badge">Host</span>' : ''}
         </div>
       `).join('');
-    }
+        }
 
-    function updateRoleDisplay(prefix, isImpostor, word, category) {
-      const isGame = prefix === 'Game';
-      const card = document.getElementById(isGame ? 'roleCardGame' : 'roleCard');
-      const title = document.getElementById(isGame ? 'roleTitleGame' : 'roleTitle');
-      const wordEl = document.getElementById(isGame ? 'wordDisplayGame' : 'wordDisplay');
-      const hint = document.getElementById(isGame ? 'roleHintGame' : 'roleHint');
+        function updateRoleDisplay(prefix, isImpostor, word, category) {
+            const isGame = prefix === 'Game';
+            const card = document.getElementById(isGame ? 'roleCardGame' : 'roleCard');
+            const title = document.getElementById(isGame ? 'roleTitleGame' : 'roleTitle');
+            const wordEl = document.getElementById(isGame ? 'wordDisplayGame' : 'wordDisplay');
+            const hint = document.getElementById(isGame ? 'roleHintGame' : 'roleHint');
 
-      card.className = 'role-card ' + (isImpostor ? 'impostor' : 'innocent');
-      title.textContent = isImpostor ? 'Impostor' : 'Inocente';
-      wordEl.textContent = isImpostor ? '???' : word;
-      hint.textContent = isImpostor ? 'Descubre la palabra sin ser descubierto' : 'Describe la palabra sin ser obvio';
+            card.className = 'role-card ' + (isImpostor ? 'impostor' : 'innocent');
+            title.textContent = isImpostor ? 'Impostor' : 'Inocente';
+            wordEl.textContent = isImpostor ? '???' : word;
+            hint.textContent = isImpostor ? 'Descubre la palabra sin ser descubierto' : 'Describe la palabra sin ser obvio';
 
-      if (!isGame && category) {
-        document.getElementById('categoryTag').textContent = 'Categoria: ' + category;
-      }
-    }
+            if (!isGame && category) {
+                document.getElementById('categoryTag').textContent = 'Categoria: ' + category;
+            }
+        }
 
-    function updateVotingUI(votingOrder, currentVoterIndex) {
-      const current = votingOrder[currentVoterIndex];
-      const isMyTurn = current.id === myPlayerId;
-      const status = document.getElementById('votingStatus');
+        function updateVotingUI(votingOrder, currentVoterIndex) {
+            const current = votingOrder[currentVoterIndex];
+            const isMyTurn = current.id === myPlayerId;
+            const status = document.getElementById('votingStatus');
 
-      status.classList.toggle('my-turn', isMyTurn);
-      document.getElementById('currentVoterDisplay').textContent = isMyTurn ? 'Es tu turno' : 'Turno de ' + current.name;
+            status.classList.toggle('my-turn', isMyTurn);
+            document.getElementById('currentVoterDisplay').textContent = isMyTurn ? 'Es tu turno' : 'Turno de ' + current.name;
 
-      const btns = document.getElementById('votingButtons');
-      if (isMyTurn) {
-        btns.innerHTML = votingOrder
-          .filter(p => p.id !== myPlayerId)
-          .map(p => `<button class="btn btn-vote" onclick="castVote('${p.id}')">${escapeHtml(p.name)}</button>`)
-          .join('');
-      } else {
-        btns.innerHTML = '<p class="waiting">Esperando...</p>';
-      }
-    }
+            const btns = document.getElementById('votingButtons');
+            if (isMyTurn) {
+                btns.innerHTML = votingOrder
+                    .filter(p => p.id !== myPlayerId)
+                    .map(p => `<button class="btn btn-vote" onclick="castVote('${p.id}')">${escapeHtml(p.name)}</button>`)
+                    .join('');
+            } else {
+                btns.innerHTML = '<p class="waiting">Esperando...</p>';
+            }
+        }
 
-    // Socket events
-    socket.on('roomCreated', ({ roomCode, room, categories: cats }) => {
-      currentRoom = roomCode;
-      myPlayerId = socket.id;
-      isHost = true;
-      populateCategories(cats);
-      document.getElementById('roomCodeDisplay').textContent = roomCode;
-      showScreen('lobbyHostScreen');
-    });
+        // Socket events
+        socket.on('roomCreated', ({ roomCode, room, categories: cats }) => {
+            currentRoom = roomCode;
+            myPlayerId = socket.id;
+            isHost = true;
+            populateCategories(cats);
+            document.getElementById('roomCodeDisplay').textContent = roomCode;
+            showScreen('lobbyHostScreen');
+        });
 
-    socket.on('roomJoined', ({ roomCode, room, categories: cats }) => {
-      currentRoom = roomCode;
-      myPlayerId = socket.id;
-      isHost = false;
-      categories = cats;
-      document.getElementById('roomCodePlayer').textContent = roomCode;
-      showScreen('lobbyPlayerScreen');
-    });
+        socket.on('roomJoined', ({ roomCode, room, categories: cats }) => {
+            currentRoom = roomCode;
+            myPlayerId = socket.id;
+            isHost = false;
+            categories = cats;
+            document.getElementById('roomCodePlayer').textContent = roomCode;
+            showScreen('lobbyPlayerScreen');
+        });
 
-    socket.on('playerListUpdate', (players) => {
-      const count = players.length;
-      const me = players.find(p => p.id === myPlayerId);
-      if (me) isHost = me.isHost;
+        socket.on('playerListUpdate', (players) => {
+            const count = players.length;
+            const me = players.find(p => p.id === myPlayerId);
+            if (me) isHost = me.isHost;
 
-      if (isHost) {
-        document.getElementById('playerCount').textContent = count;
-        renderPlayerList(players, 'playerListHost');
-        document.getElementById('startButton').disabled = count < 4;
-      } else {
-        document.getElementById('playerCountPlayer').textContent = count;
-        renderPlayerList(players, 'playerListPlayer');
-      }
-    });
+            if (isHost) {
+                document.getElementById('playerCount').textContent = count;
+                renderPlayerList(players, 'playerListHost');
+                document.getElementById('startButton').disabled = count < 4;
+            } else {
+                document.getElementById('playerCountPlayer').textContent = count;
+                renderPlayerList(players, 'playerListPlayer');
+            }
+        });
 
-    socket.on('configUpdate', (config) => {
-      document.getElementById('categorySelect').value = config.category;
-      document.getElementById('impostorCountSelect').value = config.impostorCount;
-    });
+        socket.on('configUpdate', (config) => {
+            document.getElementById('categorySelect').value = config.category;
+            document.getElementById('impostorCountSelect').value = config.impostorCount;
+        });
 
-    socket.on('becameHost', () => {
-      isHost = true;
-      toast('Ahora eres el host');
-    });
+        socket.on('becameHost', () => {
+            isHost = true;
+            toast('Ahora eres el host');
+        });
 
-    socket.on('yourRole', ({ isImpostor, word, category }) => {
-      myRole = { isImpostor, word };
-      updateRoleDisplay('', isImpostor, word, category);
-      document.getElementById('readyButton').style.display = isHost ? 'block' : 'none';
-      document.getElementById('waitingMessage').style.display = isHost ? 'none' : 'block';
-      showScreen('roleScreen');
-    });
+        socket.on('yourRole', ({ isImpostor, word, category }) => {
+            myRole = { isImpostor, word };
+            updateRoleDisplay('', isImpostor, word, category);
+            document.getElementById('readyButton').style.display = isHost ? 'block' : 'none';
+            document.getElementById('waitingMessage').style.display = isHost ? 'none' : 'block';
+            showScreen('roleScreen');
+        });
 
-    socket.on('votingStarted', ({ votingOrder, currentVoterIndex }) => {
-      document.getElementById('votesDisplay').innerHTML = '';
-      updateVotingUI(votingOrder, currentVoterIndex);
-      showScreen('votingScreen');
-    });
+        socket.on('votingStarted', ({ votingOrder, currentVoterIndex }) => {
+            document.getElementById('votesDisplay').innerHTML = '';
+            updateVotingUI(votingOrder, currentVoterIndex);
+            showScreen('votingScreen');
+        });
 
-    socket.on('voteCast', ({ voterName, votedForName, votingOrder, currentVoterIndex, votingFinished }) => {
-      const log = document.getElementById('votesDisplay');
-      log.innerHTML += `<div class="vote-entry"><span>${escapeHtml(voterName)}</span> voto por <span>${escapeHtml(votedForName)}</span></div>`;
-      log.scrollTop = log.scrollHeight;
-      if (!votingFinished) updateVotingUI(votingOrder, currentVoterIndex);
-    });
+        socket.on('voteCast', ({ voterName, votedForName, votingOrder, currentVoterIndex, votingFinished }) => {
+            const log = document.getElementById('votesDisplay');
+            log.innerHTML += `<div class="vote-entry"><span>${escapeHtml(voterName)}</span> voto por <span>${escapeHtml(votedForName)}</span></div>`;
+            log.scrollTop = log.scrollHeight;
+            if (!votingFinished) updateVotingUI(votingOrder, currentVoterIndex);
+        });
 
-    socket.on('playerEliminated', ({ playerName, wasImpostor }) => {
-      document.getElementById('eliminatedName').textContent = playerName + ' fue eliminado';
-      document.getElementById('eliminatedRole').textContent = wasImpostor ? 'Era un impostor' : 'Era inocente';
-      showScreen('eliminationScreen');
-    });
+        socket.on('playerEliminated', ({ playerName, wasImpostor }) => {
+            document.getElementById('eliminatedName').textContent = playerName + ' fue eliminado';
+            document.getElementById('eliminatedRole').textContent = wasImpostor ? 'Era un impostor' : 'Era inocente';
+            showScreen('eliminationScreen');
+        });
 
-    socket.on('continueGame', ({ alivePlayers, roundNumber }) => {
-      updateRoleDisplay('Game', myRole.isImpostor, myRole.word, null);
-      document.getElementById('alivePlayersList').innerHTML = alivePlayers.map(p => `
+        socket.on('continueGame', ({ alivePlayers, roundNumber }) => {
+            updateRoleDisplay('Game', myRole.isImpostor, myRole.word, null);
+            document.getElementById('alivePlayersList').innerHTML = alivePlayers.map(p => `
         <div class="player-item"><span class="player-name">${escapeHtml(p.name)}</span></div>
       `).join('');
-      document.getElementById('roundNumber').textContent = roundNumber;
-      document.getElementById('startVotingBtn').style.display = isHost ? 'block' : 'none';
-      document.getElementById('waitingVoteMessage').style.display = isHost ? 'none' : 'block';
-      showScreen('gameScreen');
-    });
+            document.getElementById('roundNumber').textContent = roundNumber;
+            document.getElementById('startVotingBtn').style.display = isHost ? 'block' : 'none';
+            document.getElementById('waitingVoteMessage').style.display = isHost ? 'none' : 'block';
+            showScreen('gameScreen');
+        });
 
-    socket.on('gameEnded', ({ winner, players, word }) => {
-      const banner = document.getElementById('winnerBanner');
-      const title = document.getElementById('winnerTitle');
-      const msg = document.getElementById('winnerMessage');
+        socket.on('gameEnded', ({ winner, players, word }) => {
+            const banner = document.getElementById('winnerBanner');
+            const title = document.getElementById('winnerTitle');
+            const msg = document.getElementById('winnerMessage');
 
-      if (winner === 'innocents') {
-        banner.className = 'result-banner innocents';
-        title.textContent = 'Ganaron los inocentes';
-        msg.textContent = 'Todos los impostores fueron eliminados';
-      } else {
-        banner.className = 'result-banner impostors';
-        title.textContent = 'Ganaron los impostores';
-        msg.textContent = 'Los impostores dominaron';
-      }
+            if (winner === 'innocents') {
+                banner.className = 'result-banner innocents';
+                title.textContent = 'Ganaron los inocentes';
+                msg.textContent = 'Todos los impostores fueron eliminados';
+            } else {
+                banner.className = 'result-banner impostors';
+                title.textContent = 'Ganaron los impostores';
+                msg.textContent = 'Los impostores dominaron';
+            }
 
-      document.getElementById('revealedWord').textContent = word;
-      document.getElementById('finalPlayerList').innerHTML = players.map(p => `
+            document.getElementById('revealedWord').textContent = word;
+            document.getElementById('finalPlayerList').innerHTML = players.map(p => `
         <div class="reveal-item ${p.isImpostor ? 'impostor' : ''}">
           <span class="player-name">${escapeHtml(p.name)}</span>
           <span class="reveal-role">${p.isImpostor ? 'Impostor' : 'Inocente'}</span>
         </div>
       `).join('');
 
-      document.getElementById('resetButton').style.display = isHost ? 'block' : 'none';
-      showScreen('endScreen');
-    });
+            document.getElementById('continueButton').style.display = isHost ? 'block' : 'none';
+            document.getElementById('resetButton').style.display = isHost ? 'block' : 'none';
+            showScreen('endScreen');
+        });
 
-    socket.on('gameReset', () => location.reload());
-    socket.on('playerDisconnected', ({ playersRemaining }) => toast(`Jugador desconectado (${playersRemaining})`));
-    socket.on('error', msg => toast(msg, 'error'));
+        socket.on('gameReset', () => location.reload());
+        socket.on('playerDisconnected', ({ playersRemaining }) => toast(`Jugador desconectado (${playersRemaining})`));
+        socket.on('error', msg => toast(msg, 'error'));
 
-    // Enter key
-    document.getElementById('playerNameInput').addEventListener('keypress', e => { if (e.key === 'Enter') createRoom(); });
-    document.getElementById('joinNameInput').addEventListener('keypress', e => { if (e.key === 'Enter') document.getElementById('roomCodeInput').focus(); });
-    document.getElementById('roomCodeInput').addEventListener('keypress', e => { if (e.key === 'Enter') joinRoom(); });
-  </script>
+        // Enter key
+        document.getElementById('playerNameInput').addEventListener('keypress', e => { if (e.key === 'Enter') createRoom(); });
+        document.getElementById('joinNameInput').addEventListener('keypress', e => { if (e.key === 'Enter') document.getElementById('roomCodeInput').focus(); });
+        document.getElementById('roomCodeInput').addEventListener('keypress', e => { if (e.key === 'Enter') joinRoom(); });
+    </script>
 </body>
+
 </html>
