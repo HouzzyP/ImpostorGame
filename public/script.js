@@ -4,6 +4,7 @@ let myPlayerId = null;
 let isHost = false;
 let myRole = null;
 let categories = {};
+let hasVoted = false;
 
 // ============================================
 // THEME MANAGEMENT
@@ -135,6 +136,8 @@ function finishVoting() {
 }
 
 function castVote(id) {
+    if (hasVoted) return;
+    hasVoted = true;
     socket.emit('castVote', { roomCode: currentRoom, votedFor: id });
 }
 
@@ -265,6 +268,7 @@ socket.on('yourRole', ({ isImpostor, word, category }) => {
 });
 
 socket.on('votingStarted', ({ votingOrder, currentVoterIndex }) => {
+    hasVoted = false;
     document.getElementById('votesDisplay').innerHTML = '';
     updateVotingUI(votingOrder, currentVoterIndex);
     document.getElementById('finishVotingBtn').style.display = isHost ? 'block' : 'none';
@@ -272,6 +276,7 @@ socket.on('votingStarted', ({ votingOrder, currentVoterIndex }) => {
 });
 
 socket.on('voteCast', ({ voterName, votedForName, votingOrder, currentVoterIndex, votingFinished }) => {
+    hasVoted = false;
     const log = document.getElementById('votesDisplay');
     log.innerHTML += `<div class="vote-entry"><span>${escapeHtml(voterName)}</span> voto por <span>${escapeHtml(votedForName)}</span></div>`;
     log.scrollTop = log.scrollHeight;

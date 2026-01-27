@@ -183,27 +183,26 @@ function registerSocketHandlers(io, rooms) {
             const votedForPlayer = getPlayerFromRoom(room, data.votedFor);
             if (!votedForPlayer) return;
 
-            // Registrar voto (reemplazar si ya votó)
-            const existingVoteIndex = room.votes.findIndex(v => v.voterId === socket.id);
-            if (existingVoteIndex > -1) {
-                room.votes[existingVoteIndex].votedFor = data.votedFor;
-            } else {
-                room.votes.push({
-                    voterId: socket.id,
-                    voterName: voter.username,
-                    votedFor: data.votedFor
-                });
-            }
+            // Registrar voto
+            room.votes.push({
+                voterId: socket.id,
+                voterName: voter.username,
+                votedFor: data.votedFor
+            });
+
+            // Calcular siguiente votante
+            const alivePlayers = room.players.filter(p => p.alive);
+            const nextVoterIndex = room.votes.length % alivePlayers.length;
 
             // Notificar voto emitido
             io.to(data.roomCode).emit('voteCast', {
                 voterName: voter.username,
                 votedForName: votedForPlayer.username,
-                votingOrder: room.players.filter(p => p.alive).map(p => ({
+                votingOrder: alivePlayers.map(p => ({
                     id: p.id,
                     username: p.username
                 })),
-                currentVoterIndex: 0,
+                currentVoterIndex: nextVoterIndex,
                 votingFinished: false
             });
         });
