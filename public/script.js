@@ -150,9 +150,14 @@ function sendReaction(emoji) {
     socket.emit('sendReaction', { roomCode: currentRoom, emoji });
 }
 
+let votingTimerInterval = null;
+
 function startVotingTimer() {
     const timerEl = document.getElementById('votingTimer');
     if (!timerEl) return;
+
+    // Limpia intervalos previos
+    if (votingTimerInterval) clearInterval(votingTimerInterval);
 
     const updateTimer = () => {
         if (!votingStartTime) return;
@@ -163,10 +168,7 @@ function startVotingTimer() {
     };
 
     updateTimer();
-    const interval = setInterval(() => {
-        if (document.activeElement && document.activeElement.id !== 'votingScreen') clearInterval(interval);
-        updateTimer();
-    }, 500);
+    votingTimerInterval = setInterval(updateTimer, 500);
 }
 
 function continueGame() {
@@ -430,6 +432,23 @@ socket.on('gameEnded', ({ winner, players, word }) => {
 socket.on('gameResetToLobby', ({ categories: cats }) => {
     categories = cats;
     populateCategories(cats);
+    if (isHost) {
+        document.getElementById('playerCount').textContent = document.querySelectorAll('#playerListHost .player-item').length;
+        document.getElementById('startButton').disabled = document.querySelectorAll('#playerListHost .player-item').length < 4;
+        showScreen('lobbyHostScreen');
+    } else {
+        showScreen('lobbyPlayerScreen');
+    }
+});
+
+socket.on('gameInterrupted', ({ message, categories: cats }) => {
+    categories = cats;
+    populateCategories(cats);
+    toast(message, 'warning');
+    pendingNextState = null;
+    inEliminationScreen = false;
+    if (votingTimerInterval) clearInterval(votingTimerInterval);
+
     if (isHost) {
         document.getElementById('playerCount').textContent = document.querySelectorAll('#playerListHost .player-item').length;
         document.getElementById('startButton').disabled = document.querySelectorAll('#playerListHost .player-item').length < 4;

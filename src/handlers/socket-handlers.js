@@ -403,10 +403,21 @@ function registerSocketHandlers(io, rooms) {
                         console.log(`[${new Date().toLocaleTimeString()}] Sala ${roomCode} eliminada`);
                         io.socketsLeave(roomCode);
                     } else {
-                        // Si es un jugador normal, solo removerlo
-                        removePlayerFromRoom(room, socket.id);
-                        io.to(roomCode).emit('playerListUpdate', room.players);
-                        console.log(`[${new Date().toLocaleTimeString()}] Jugador removido de ${roomCode}`);
+                        // Si la partida está en progreso, resetea la sala y devuelve a todos al lobby
+                        if (room.gameState !== 'waiting') {
+                            resetRoomForNewRound(room);
+                            removePlayerFromRoom(room, socket.id);
+                            io.to(roomCode).emit('gameInterrupted', {
+                                message: `${playerToRemove.username} se desconectó. Volviendo al lobby.`,
+                                categories: categoryNames
+                            });
+                            console.log(`[${new Date().toLocaleTimeString()}] Partida en ${roomCode} interrumpida por desconexión`);
+                        } else {
+                            // Si está en lobby, solo remover
+                            removePlayerFromRoom(room, socket.id);
+                            io.to(roomCode).emit('playerListUpdate', room.players);
+                            console.log(`[${new Date().toLocaleTimeString()}] Jugador removido de ${roomCode}`);
+                        }
                     }
                     break;
                 }
