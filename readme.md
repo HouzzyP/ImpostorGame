@@ -10,7 +10,7 @@
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-2.0.0-brightgreen.svg)](package.json)
 
-[🎮 Demo en Vivo](https://tu-demo-url.com) • [📖 Documentación](docs/INDICE.md) • [🐛 Reportar Bug](https://github.com/tu-usuario/ImpostorGame/issues)
+[📖 Documentación](docs/INDICE.md) • [🐛 Reportar Bug](https://github.com/tu-usuario/ImpostorGame/issues)
 
 </div>
 
