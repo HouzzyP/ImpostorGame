@@ -19,6 +19,7 @@ module.exports = {
     // Configuración de juego (defaults)
     GAME_CONFIG: {
         maxPlayers: 8,
+        impostorCount: 1,
         minPlayers: 4,
         votingTime: 30,        // segundos
         discussionTime: 30,    // segundos

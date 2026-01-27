@@ -22,6 +22,7 @@ function createRoom(roomCode, player) {
         ],
         config: {
             maxPlayers: 8,
+            impostorCount: 1,
             votingTime: 30,
             discussionTime: 30,
             roundsBeforeWin: 1,

@@ -123,8 +123,8 @@ function registerSocketHandlers(io, rooms) {
                 room.word = word;
                 room.category = categoryKey;
 
-                // Asignar roles
-                room.players = assignRoles(room.players);
+                // Asignar roles (soporta múltiples impostores)
+                room.players = assignRoles(room.players, room.config.impostorCount || 1);
                 room.players = assignWordAndCategory(room.players, categoryKey, word);
 
                 io.to(data.roomCode).emit('gameStarted', { category: categoryNames[categoryKey] });
@@ -217,34 +217,35 @@ function registerSocketHandlers(io, rooms) {
                     if (eliminatedPlayer) {
                         eliminatedPlayer.alive = false;
 
+                        const winCondition = checkGameWinner(room);
+                        const gameOver = winCondition.gameOver;
+
                         io.to(data.roomCode).emit('playerEliminated', {
                             playerName: eliminatedPlayer.username,
                             wasImpostor: voteResult.impostorFound,
-                            impostorFound: voteResult.impostorFound
-                        });
-                    }
-
-                    const winCondition = checkGameWinner(room);
-                    if (winCondition.gameOver) {
-                        room.gameWinner = winCondition;
-                        io.to(data.roomCode).emit('gameEnded', {
-                            winner: winCondition.winner,
-                            word: room.word,
-                            players: room.players.map(p => ({
+                            impostorFound: voteResult.impostorFound,
+                            gameEnded: gameOver,
+                            winner: gameOver ? winCondition.winner : null,
+                            word: gameOver ? room.word : null,
+                            players: gameOver ? room.players.map(p => ({
                                 name: p.username,
                                 isImpostor: p.role === 'impostor',
                                 alive: p.alive
-                            }))
+                            })) : null
                         });
-                    } else {
-                        // Juego continúa, volver a la pantalla de juego
-                        room.gameState = 'playing';
-                        room.currentRound++;
-                        room.discussionEndTime = Date.now() + room.config.discussionTime * 1000;
-                        io.to(data.roomCode).emit('continueGame', {
-                            alivePlayers: room.players.filter(p => p.alive),
-                            roundNumber: room.currentRound
-                        });
+
+                        if (!gameOver) {
+                            // Juego continúa, volver a la pantalla de juego
+                            room.gameState = 'playing';
+                            room.currentRound++;
+                            room.discussionEndTime = Date.now() + room.config.discussionTime * 1000;
+                            io.to(data.roomCode).emit('continueGame', {
+                                alivePlayers: room.players.filter(p => p.alive),
+                                roundNumber: room.currentRound
+                            });
+                        } else {
+                            room.gameWinner = winCondition;
+                        }
                     }
                 }
             } else {
@@ -292,35 +293,35 @@ function registerSocketHandlers(io, rooms) {
                 if (eliminatedPlayer) {
                     eliminatedPlayer.alive = false;
 
+                    const winCondition = checkGameWinner(room);
+                    const gameOver = winCondition.gameOver;
+
                     io.to(data.roomCode).emit('playerEliminated', {
                         playerName: eliminatedPlayer.username,
                         wasImpostor: voteResult.impostorFound,
-                        impostorFound: voteResult.impostorFound
-                    });
-                }
-
-                // Verificar si el juego terminó
-                const winCondition = checkGameWinner(room);
-                if (winCondition.gameOver) {
-                    room.gameWinner = winCondition;
-                    io.to(data.roomCode).emit('gameEnded', {
-                        winner: winCondition.winner,
-                        word: room.word,
-                        players: room.players.map(p => ({
+                        impostorFound: voteResult.impostorFound,
+                        gameEnded: gameOver,
+                        winner: gameOver ? winCondition.winner : null,
+                        word: gameOver ? room.word : null,
+                        players: gameOver ? room.players.map(p => ({
                             name: p.username,
                             isImpostor: p.role === 'impostor',
                             alive: p.alive
-                        }))
+                        })) : null
                     });
-                } else {
-                    // Juego continúa, volver a la pantalla de juego
-                    room.gameState = 'playing';
-                    room.currentRound++;
-                    room.discussionEndTime = Date.now() + room.config.discussionTime * 1000;
-                    io.to(data.roomCode).emit('continueGame', {
-                        alivePlayers: room.players.filter(p => p.alive),
-                        roundNumber: room.currentRound
-                    });
+
+                    if (!gameOver) {
+                        // Juego continúa, volver a la pantalla de juego
+                        room.gameState = 'playing';
+                        room.currentRound++;
+                        room.discussionEndTime = Date.now() + room.config.discussionTime * 1000;
+                        io.to(data.roomCode).emit('continueGame', {
+                            alivePlayers: room.players.filter(p => p.alive),
+                            roundNumber: room.currentRound
+                        });
+                    } else {
+                        room.gameWinner = winCondition;
+                    }
                 }
             }
         });

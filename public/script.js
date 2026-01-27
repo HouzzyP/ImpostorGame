@@ -5,6 +5,8 @@ let isHost = false;
 let myRole = null;
 let categories = {};
 let hasVoted = false;
+let pendingNextState = null; // caches continueGame or gameEnded payloads
+let inEliminationScreen = false; // true while showing elimination/tie feedback
 
 // ============================================
 // THEME MANAGEMENT
@@ -142,7 +144,50 @@ function castVote(id) {
 }
 
 function continueGame() {
-    showScreen('gameScreen');
+    // Apply any pending next state after elimination/tie feedback
+    if (pendingNextState) {
+        if (pendingNextState.type === 'continueGame') {
+            const { alivePlayers, roundNumber } = pendingNextState.payload;
+            updateRoleDisplay('Game', myRole.isImpostor, myRole.word, null);
+            document.getElementById('alivePlayersList').innerHTML = alivePlayers.map(p => `
+                <div class="player-item"><span class="player-name">${escapeHtml(p.username)}</span></div>
+            `).join('');
+            document.getElementById('roundNumber').textContent = roundNumber;
+            document.getElementById('startVotingBtn').style.display = isHost ? 'block' : 'none';
+            document.getElementById('waitingVoteMessage').style.display = isHost ? 'none' : 'block';
+            showScreen('gameScreen');
+        } else if (pendingNextState.type === 'gameEnded') {
+            const { winner, players, word } = pendingNextState.payload;
+            const banner = document.getElementById('winnerBanner');
+            const title = document.getElementById('winnerTitle');
+            const msg = document.getElementById('winnerMessage');
+
+            if (winner === 'innocents' || winner === 'civiles') {
+                banner.className = 'result-banner innocents';
+                title.textContent = 'Ganaron los inocentes';
+                msg.textContent = 'Todos los impostores fueron eliminados';
+            } else {
+                banner.className = 'result-banner impostors';
+                title.textContent = 'Ganaron los impostores';
+                msg.textContent = 'Los impostores dominaron';
+            }
+
+            document.getElementById('revealedWord').textContent = word || '';
+            document.getElementById('finalPlayerList').innerHTML = (players || []).map(p => `
+                <div class="reveal-item ${p.isImpostor ? 'impostor' : ''}">
+                    <span class="player-name">${escapeHtml(p.name)}</span>
+                    <span class="reveal-role">${p.isImpostor ? 'Impostor' : 'Inocente'}</span>
+                </div>
+            `).join('');
+
+            document.getElementById('continueButton').style.display = isHost ? 'block' : 'none';
+            document.getElementById('resetButton').style.display = isHost ? 'block' : 'none';
+            showScreen('endScreen');
+        }
+    }
+    // Clear elimination state
+    pendingNextState = null;
+    inEliminationScreen = false;
 }
 
 function continueInRoom() {
@@ -283,13 +328,27 @@ socket.on('voteCast', ({ voterName, votedForName, votingOrder, currentVoterIndex
     if (!votingFinished) updateVotingUI(votingOrder, currentVoterIndex);
 });
 
-socket.on('playerEliminated', ({ playerName, wasImpostor }) => {
+socket.on('playerEliminated', ({ playerName, wasImpostor, gameEnded, winner, word, players }) => {
+    // Show elimination feedback first
+    inEliminationScreen = true;
     document.getElementById('eliminatedName').textContent = playerName + ' fue eliminado';
     document.getElementById('eliminatedRole').textContent = wasImpostor ? 'Era un impostor' : 'Era inocente';
     showScreen('eliminationScreen');
+
+    if (gameEnded) {
+        // Cache end state and allow user to proceed
+        pendingNextState = { type: 'gameEnded', payload: { winner, word, players } };
+        // Optionally auto-advance after short delay for smoother UX
+        setTimeout(() => {
+            if (inEliminationScreen && pendingNextState && pendingNextState.type === 'gameEnded') {
+                continueGame();
+            }
+        }, 1500);
+    }
 });
 
-socket.on('tieVoting', ({ votes }) => {
+socket.on('tieVoting', ({ players }) => {
+    inEliminationScreen = true;
     const bannerId = document.getElementById('eliminatedName');
     bannerId.textContent = '¡EMPATE!';
     document.getElementById('eliminatedRole').textContent = 'Nadie fue eliminado';
@@ -297,14 +356,12 @@ socket.on('tieVoting', ({ votes }) => {
 });
 
 socket.on('continueGame', ({ alivePlayers, roundNumber }) => {
-    updateRoleDisplay('Game', myRole.isImpostor, myRole.word, null);
-    document.getElementById('alivePlayersList').innerHTML = alivePlayers.map(p => `
-        <div class="player-item"><span class="player-name">${escapeHtml(p.username)}</span></div>
-    `).join('');
-    document.getElementById('roundNumber').textContent = roundNumber;
-    document.getElementById('startVotingBtn').style.display = isHost ? 'block' : 'none';
-    document.getElementById('waitingVoteMessage').style.display = isHost ? 'none' : 'block';
-    showScreen('gameScreen');
+    // Cache next game state; apply after user clicks "Continuar"
+    pendingNextState = { type: 'continueGame', payload: { alivePlayers, roundNumber } };
+    // If not showing elimination/tie feedback, proceed immediately
+    if (!inEliminationScreen) {
+        continueGame();
+    }
 });
 
 socket.on('gameEnded', ({ winner, players, word }) => {

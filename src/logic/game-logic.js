@@ -2,15 +2,21 @@
 const { shuffleArray, getRandomWord } = require('../utils/utils');
 
 /**
- * Asigna roles a los jugadores (uno es impostor, el resto son civiles)
+ * Asigna roles a los jugadores (N impostores, resto civiles)
  * @param {Array} players - Array de objetos jugador
+ * @param {number} impostorCount - Cantidad de impostores (>=1)
  * @returns {Array} Array de jugadores con rol asignado
  */
-function assignRoles(players) {
-    const impostorIndex = Math.floor(Math.random() * players.length);
+function assignRoles(players, impostorCount = 1) {
+    const count = Math.max(1, Math.min(impostorCount, players.length - 1));
+    const chosen = new Set();
+    while (chosen.size < count) {
+        const idx = Math.floor(Math.random() * players.length);
+        chosen.add(idx);
+    }
     return players.map((player, index) => ({
         ...player,
-        role: index === impostorIndex ? 'impostor' : 'civil'
+        role: chosen.has(index) ? 'impostor' : 'civil'
     }));
 }
 
