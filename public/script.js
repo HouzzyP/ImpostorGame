@@ -74,14 +74,14 @@ function copyRoomCode() {
 function createRoom() {
     const name = document.getElementById('playerNameInput').value.trim();
     if (!name) return toast('Ingresa tu nombre', 'error');
-    socket.emit('createRoom', name);
+    socket.emit('createRoom', { username: name });
 }
 
 function joinRoom() {
     const name = document.getElementById('joinNameInput').value.trim();
     const code = document.getElementById('roomCodeInput').value.trim().toUpperCase();
     if (!name || !code) return toast('Completa todos los campos', 'error');
-    socket.emit('joinRoom', { roomCode: code, playerName: name });
+    socket.emit('joinRoom', { roomCode: code, username: name });
 }
 
 // ============================================
@@ -123,15 +123,19 @@ function randomCategory() {
 // ============================================
 
 function startGame() {
-    socket.emit('startGame', currentRoom);
+    socket.emit('startGame', { roomCode: currentRoom });
 }
 
 function startVoting() {
-    socket.emit('startVoting', currentRoom);
+    socket.emit('startVoting', { roomCode: currentRoom });
+}
+
+function finishVoting() {
+    socket.emit('finishVoting', { roomCode: currentRoom });
 }
 
 function castVote(id) {
-    socket.emit('castVote', { roomCode: currentRoom, votedForId: id });
+    socket.emit('castVote', { roomCode: currentRoom, votedFor: id });
 }
 
 function continueGame() {
@@ -139,11 +143,11 @@ function continueGame() {
 }
 
 function continueInRoom() {
-    socket.emit('continueInRoom', currentRoom);
+    socket.emit('continueInRoom', { roomCode: currentRoom });
 }
 
 function resetGame() {
-    socket.emit('resetGame', currentRoom);
+    socket.emit('resetGame', { roomCode: currentRoom });
 }
 
 // ============================================
@@ -263,6 +267,7 @@ socket.on('yourRole', ({ isImpostor, word, category }) => {
 socket.on('votingStarted', ({ votingOrder, currentVoterIndex }) => {
     document.getElementById('votesDisplay').innerHTML = '';
     updateVotingUI(votingOrder, currentVoterIndex);
+    document.getElementById('finishVotingBtn').style.display = isHost ? 'block' : 'none';
     showScreen('votingScreen');
 });
 
