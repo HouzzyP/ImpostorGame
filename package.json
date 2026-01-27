@@ -1,16 +1,17 @@
 {
-  "name": "el-impostor-game",
-  "version": "1.0.0",
-  "description": "Juego del Impostor multijugador en tiempo real",
+  "name": "el-impostor",
+  "version": "2.0.0",
+  "description": "Juego multijugador de deduccion social",
   "main": "server.js",
-  "engines": {
-    "node": ">=14.0.0"
-  },
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "dev": "node server.js"
   },
   "dependencies": {
     "express": "^4.18.2",
     "socket.io": "^4.6.1"
+  },
+  "engines": {
+    "node": ">=16.0.0"
   }
 }
