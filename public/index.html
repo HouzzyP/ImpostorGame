@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>El Impostor - Juego Online</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      max-width: 800px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+
+    h1 {
+      color: #667eea;
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 2.5em;
+    }
+
+    h2 {
+      color: #333;
+      margin-bottom: 20px;
+    }
+
+    .screen {
+      display: none;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    input, select, button {
+      width: 100%;
+      padding: 15px;
+      margin: 10px 0;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 16px;
+      transition: all 0.3s;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    button.secondary {
+      background: #6c757d;
+    }
+
+    button.danger {
+      background: #dc3545;
+    }
+
+    .room-code {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      margin: 20px 0;
+      font-size: 2em;
+      font-weight: bold;
+      color: #667eea;
+      letter-spacing: 5px;
+    }
+
+    .player-list {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 10px;
+      margin: 20px 0;
+    }
+
+    .player-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px;
+      margin: 5px 0;
+      background: white;
+      border-radius: 8px;
+      border-left: 4px solid #667eea;
+    }
+
+    .player-item.host {
+      border-left-color: #ffd700;
+    }
+
+    .player-item.dead {
+      opacity: 0.5;
+      text-decoration: line-through;
+    }
+
+    .badge {
+      background: #ffd700;
+      color: #333;
+      padding: 5px 10px;
+      border-radius: 5px;
+      font-size: 0.8em;
+      font-weight: bold;
+    }
+
+    .config-section {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 10px;
+      margin: 20px 0;
+    }
+
+    .config-item {
+      margin: 15px 0;
+    }
+
+    .config-item label {
+      display: block;
+      margin-bottom: 5px;
+      color: #555;
+      font-weight: bold;
+    }
+
+    .role-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 40px;
+      border-radius: 15px;
+      text-align: center;
+      margin: 30px 0;
+      min-height: 200px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .role-card.impostor {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+
+    .role-card h2 {
+      color: white;
+      font-size: 3em;
+      margin-bottom: 20px;
+    }
+
+    .word {
+      font-size: 2.5em;
+      font-weight: bold;
+      margin-top: 20px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .voting-section {
+      margin: 20px 0;
+    }
+
+    .vote-button {
+      margin: 5px 0;
+      background: #28a745;
+    }
+
+    .vote-button:hover {
+      background: #218838;
+    }
+
+    .vote-button:disabled {
+      background: #6c757d;
+    }
+
+    .current-voter {
+      background: #fff3cd;
+      border: 2px solid #ffc107;
+      padding: 15px;
+      border-radius: 10px;
+      text-align: center;
+      margin: 20px 0;
+      font-weight: bold;
+    }
+
+    .votes-display {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 10px;
+      margin: 20px 0;
+    }
+
+    .vote-count {
+      padding: 10px;
+      margin: 5px 0;
+      background: white;
+      border-radius: 5px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .eliminated-banner {
+      background: #dc3545;
+      color: white;
+      padding: 30px;
+      border-radius: 15px;
+      text-align: center;
+      margin: 20px 0;
+      font-size: 1.5em;
+    }
+
+    .winner-banner {
+      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+      color: white;
+      padding: 40px;
+      border-radius: 15px;
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    .winner-banner h2 {
+      color: white;
+      font-size: 3em;
+      margin-bottom: 20px;
+    }
+
+    .player-reveal {
+      background: white;
+      color: #333;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 8px;
+    }
+
+    .player-reveal.impostor {
+      background: #f5576c;
+      color: white;
+    }
+
+    .error-message {
+      background: #dc3545;
+      color: white;
+      padding: 15px;
+      border-radius: 10px;
+      margin: 10px 0;
+      text-align: center;
+    }
+
+    .info-message {
+      background: #17a2b8;
+      color: white;
+      padding: 15px;
+      border-radius: 10px;
+      margin: 10px 0;
+      text-align: center;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .screen.active {
+      animation: fadeIn 0.5s ease-in-out;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎭 El Impostor</h1>
+
+    <!-- Pantalla de inicio -->
+    <div id="homeScreen" class="screen active">
+      <input type="text" id="playerNameInput" placeholder="Ingresa tu nombre" maxlength="20">
+      <button onclick="createRoom()">Crear Sala</button>
+      <button onclick="showJoinScreen()" class="secondary">Unirse a Sala</button>
+    </div>
+
+    <!-- Pantalla de unirse -->
+    <div id="joinScreen" class="screen">
+      <input type="text" id="joinNameInput" placeholder="Tu nombre" maxlength="20">
+      <input type="text" id="roomCodeInput" placeholder="Código de sala" maxlength="6">
+      <button onclick="joinRoom()">Unirse</button>
+      <button onclick="showHomeScreen()" class="secondary">Volver</button>
+    </div>
+
+    <!-- Pantalla de lobby (host) -->
+    <div id="lobbyHostScreen" class="screen">
+      <h2>Sala Creada</h2>
+      <div class="room-code" id="roomCodeDisplay"></div>
+      
+      <div class="config-section">
+        <h3>Configuración</h3>
+        <div class="config-item">
+          <label>Categoría:</label>
+          <select id="categorySelect" onchange="updateConfig()">
+            <option value="videojuegos">🎮 Videojuegos</option>
+            <option value="famosos">⭐ Famosos</option>
+            <option value="series">📺 Series</option>
+            <option value="personajes_animados">🎨 Personajes Animados</option>
+            <option value="deportes">⚽ Deportes</option>
+            <option value="paises">🌍 Países</option>
+            <option value="peliculas">🎬 Películas</option>
+            <option value="objetos">📦 Objetos</option>
+          </select>
+        </div>
+        <div class="config-item">
+          <label>Número de Impostores:</label>
+          <select id="impostorCountSelect" onchange="updateConfig()">
+            <option value="1">1 Impostor</option>
+            <option value="2">2 Impostores</option>
+            <option value="3">3 Impostores</option>
+            <option value="4">4 Impostores</option>
+            <option value="5">5 Impostores</option>
+            <option value="6">6 Impostores</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="player-list">
+        <h3>Jugadores (<span id="playerCount">1</span>/12)</h3>
+        <div id="playerListHost"></div>
+      </div>
+
+      <button onclick="startGame()" id="startButton">Iniciar Partida</button>
+    </div>
+
+    <!-- Pantalla de lobby (jugador) -->
+    <div id="lobbyPlayerScreen" class="screen">
+      <h2>Sala: <span id="roomCodePlayer"></span></h2>
+      
+      <div class="player-list">
+        <h3>Jugadores (<span id="playerCountPlayer">0</span>/12)</h3>
+        <div id="playerListPlayer"></div>
+      </div>
+
+      <div class="info-message">Esperando a que el host inicie la partida...</div>
+    </div>
+
+    <!-- Pantalla de rol -->
+    <div id="roleScreen" class="screen">
+      <div id="roleCard" class="role-card">
+        <h2 id="roleTitle">Tu Rol</h2>
+        <div id="roleContent"></div>
+      </div>
+      <button onclick="showVotingButton()" id="readyButton">Listo (Host)</button>
+    </div>
+
+    <!-- Pantalla de juego -->
+    <div id="gameScreen" class="screen">
+      <h2>Ronda <span id="roundNumber">1</span></h2>
+      
+      <div class="player-list">
+        <h3>Jugadores Vivos</h3>
+        <div id="alivePlayersList"></div>
+      </div>
+
+      <button onclick="startVoting()" id="votingButton">Iniciar Votación (Host)</button>
+    </div>
+
+    <!-- Pantalla de votación -->
+    <div id="votingScreen" class="screen">
+      <h2>Votación</h2>
+
+      <div class="current-voter" id="currentVoterDisplay"></div>
+
+      <div class="votes-display" id="votesDisplay"></div>
+
+      <div class="voting-section" id="votingButtons"></div>
+    </div>
+
+    <!-- Pantalla de eliminación -->
+    <div id="eliminationScreen" class="screen">
+      <div class="eliminated-banner" id="eliminatedBanner"></div>
+      <button onclick="continueAfterElimination()">Continuar</button>
+    </div>
+
+    <!-- Pantalla de fin de juego -->
+    <div id="endScreen" class="screen">
+      <div class="winner-banner">
+        <h2 id="winnerTitle"></h2>
+        <p id="winnerMessage"></p>
+      </div>
+
+      <div class="player-list">
+        <h3>Revelación de Roles</h3>
+        <div id="finalPlayerList"></div>
+      </div>
+
+      <div class="info-message">
+        La palabra era: <strong id="revealedWord"></strong>
+      </div>
+
+      <button onclick="resetGame()" id="resetButton">Nueva Partida (Host)</button>
+      <button onclick="location.reload()" class="secondary">Salir</button>
+    </div>
+
+    <div id="errorDisplay"></div>
+  </div>
+
+  <script>
+    const socket = io();
+    let currentRoom = null;
+    let myPlayerId = null;
+    let isHost = false;
+    let myRole = null;
+
+    function showScreen(screenId) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(screenId).classList.add('active');
+    }
+
+    function showError(message) {
+      const errorDiv = document.getElementById('errorDisplay');
+      errorDiv.innerHTML = `<div class="error-message">${message}</div>`;
+      setTimeout(() => errorDiv.innerHTML = '', 3000);
+    }
+
+    function showHomeScreen() {
+      showScreen('homeScreen');
+    }
+
+    function showJoinScreen() {
+      showScreen('joinScreen');
+    }
+
+    function createRoom() {
+      const name = document.getElementById('playerNameInput').value.trim();
+      if (!name) {
+        showError('Por favor ingresa tu nombre');
+        return;
+      }
+      socket.emit('createRoom', name);
+    }
+
+    function joinRoom() {
+      const name = document.getElementById('joinNameInput').value.trim();
+      const code = document.getElementById('roomCodeInput').value.trim().toUpperCase();
+      
+      if (!name || !code) {
+        showError('Por favor completa todos los campos');
+        return;
+      }
+      
+      socket.emit('joinRoom', { roomCode: code, playerName: name });
+    }
+
+    function updateConfig() {
+      const category = document.getElementById('categorySelect').value;
+      const impostorCount = parseInt(document.getElementById('impostorCountSelect').value);
+      
+      socket.emit('updateConfig', {
+        roomCode: currentRoom,
+        config: { category, impostorCount }
+      });
+    }
+
+    function startGame() {
+      const playerCount = document.querySelectorAll('#playerListHost .player-item').length;
+      if (playerCount < 4) {
+        showError('Se necesitan al menos 4 jugadores para iniciar');
+        return;
+      }
+      socket.emit('startGame', currentRoom);
+    }
+
+    function startVoting() {
+      socket.emit('startVoting', currentRoom);
+    }
+
+    function castVote(playerId) {
+      socket.emit('castVote', {
+        roomCode: currentRoom,
+        votedForId: playerId
+      });
+    }
+
+    function continueAfterElimination() {
+      showScreen('gameScreen');
+    }
+
+    function resetGame() {
+      socket.emit('resetGame', currentRoom);
+    }
+
+    function showVotingButton() {
+      if (isHost) {
+        showScreen('gameScreen');
+      }
+    }
+
+    function renderPlayerList(players, elementId) {
+      const container = document.getElementById(elementId);
+      container.innerHTML = players.map(p => `
+        <div class="player-item ${p.isHost ? 'host' : ''} ${!p.isAlive ? 'dead' : ''}">
+          <span>${p.name}</span>
+          ${p.isHost ? '<span class="badge">HOST</span>' : ''}
+        </div>
+      `).join('');
+    }
+
+    // Socket events
+    socket.on('roomCreated', ({ roomCode, room }) => {
+      currentRoom = roomCode;
+      myPlayerId = socket.id;
+      isHost = true;
+      document.getElementById('roomCodeDisplay').textContent = roomCode;
+      showScreen('lobbyHostScreen');
+    });
+
+    socket.on('roomJoined', ({ roomCode, room }) => {
+      currentRoom = roomCode;
+      myPlayerId = socket.id;
+      isHost = false;
+      document.getElementById('roomCodePlayer').textContent = roomCode;
+      showScreen('lobbyPlayerScreen');
+    });
+
+    socket.on('playerListUpdate', (players) => {
+      const count = players.length;
+      
+      if (isHost) {
+        document.getElementById('playerCount').textContent = count;
+        renderPlayerList(players, 'playerListHost');
+        document.getElementById('startButton').disabled = count < 4;
+      } else {
+        document.getElementById('playerCountPlayer').textContent = count;
+        renderPlayerList(players, 'playerListPlayer');
+      }
+    });
+
+    socket.on('gameStarted', () => {
+      // Esperando rol
+    });
+
+    socket.on('yourRole', ({ isImpostor, word }) => {
+      myRole = { isImpostor, word };
+      const roleCard = document.getElementById('roleCard');
+      const roleTitle = document.getElementById('roleTitle');
+      const roleContent = document.getElementById('roleContent');
+      
+      if (isImpostor) {
+        roleCard.classList.add('impostor');
+        roleTitle.textContent = '🎭 IMPOSTOR';
+        roleContent.innerHTML = '<div class="word">¡Eres el Impostor!</div><p style="margin-top: 20px;">Intenta descubrir la palabra y no ser descubierto</p>';
+      } else {
+        roleCard.classList.remove('impostor');
+        roleTitle.textContent = '✅ Jugador Inocente';
+        roleContent.innerHTML = `<div class="word">${word}</div><p style="margin-top: 20px;">Describe la palabra sin ser muy obvio</p>`;
+      }
+      
+      document.getElementById('readyButton').style.display = isHost ? 'block' : 'none';
+      showScreen('roleScreen');
+    });
+
+    socket.on('votingStarted', ({ votingOrder, currentVoterIndex }) => {
+      showScreen('votingScreen');
+      updateVotingUI(votingOrder, currentVoterIndex, {});
+    });
+
+    socket.on('voteCast', ({ voterId, voterName, votedForId, votedForName, votes }) => {
+      const votesDisplay = document.getElementById('votesDisplay');
+      votesDisplay.innerHTML += `<div class="vote-count"><span>${voterName} votó a ${votedForName}</span></div>`;
+    });
+
+    socket.on('nextVoter', ({ currentVoterIndex, voterId }) => {
+      // Se actualiza en el frontend
+    });
+
+    socket.on('playerEliminated', ({ playerId, playerName, wasImpostor, votes }) => {
+      const banner = document.getElementById('eliminatedBanner');
+      banner.innerHTML = `
+        <h2>${playerName} ha sido eliminado</h2>
+        <p style="font-size: 1.2em; margin-top: 20px;">
+          ${wasImpostor ? '🎭 ¡Era un IMPOSTOR!' : '😢 Era inocente...'}
+        </p>
+      `;
+      showScreen('eliminationScreen');
+    });
+
+    socket.on('continueGame', ({ alivePlayers }) => {
+      const list = document.getElementById('alivePlayersList');
+      list.innerHTML = alivePlayers.map(p => `
+        <div class="player-item">
+          <span>${p.name}</span>
+        </div>
+      `).join('');
+      
+      document.getElementById('roundNumber').textContent = parseInt(document.getElementById('roundNumber').textContent) + 1;
+    });
+
+    socket.on('gameEnded', ({ winner, players, word }) => {
+      const winnerTitle = document.getElementById('winnerTitle');
+      const winnerMessage = document.getElementById('winnerMessage');
+      const revealedWord = document.getElementById('revealedWord');
+      
+      if (winner === 'innocents') {
+        winnerTitle.textContent = '🎉 ¡Ganaron los Inocentes!';
+        winnerMessage.textContent = 'Todos los impostores fueron eliminados';
+      } else {
+        winnerTitle.textContent = '🎭 ¡Ganaron los Impostores!';
+        winnerMessage.textContent = 'Los impostores quedaron en mayoría';
+      }
+      
+      revealedWord.textContent = word;
+      
+      const finalList = document.getElementById('finalPlayerList');
+      finalList.innerHTML = players.map(p => `
+        <div class="player-reveal ${p.isImpostor ? 'impostor' : ''}">
+          <strong>${p.name}</strong> - ${p.isImpostor ? '🎭 IMPOSTOR' : '✅ Inocente'}
+        </div>
+      `).join('');
+      
+      document.getElementById('resetButton').style.display = isHost ? 'block' : 'none';
+      showScreen('endScreen');
+    });
+
+    socket.on('gameReset', () => {
+      location.reload();
+    });
+
+    socket.on('error', (message) => {
+      showError(message);
+    });
+
+    function updateVotingUI(votingOrder, currentVoterIndex, votes) {
+      const currentVoterId = votingOrder[currentVoterIndex].id;
+      const currentVoterName = votingOrder[currentVoterIndex].name;
+      
+      document.getElementById('currentVoterDisplay').textContent = 
+        currentVoterId === myPlayerId ? '¡Es tu turno de votar!' : `Turno de ${currentVoterName}`;
+      
+      const votingButtons = document.getElementById('votingButtons');
+      
+      if (currentVoterId === myPlayerId && myRole && myRole.isImpostor === false || currentVoterId === myPlayerId) {
+        const alivePlayers = votingOrder.filter(p => p.id !== myPlayerId);
+        votingButtons.innerHTML = alivePlayers.map(p => `
+          <button class="vote-button" onclick="castVote('${p.id}')">${p.name}</button>
+        `).join('');
+      } else {
+        votingButtons.innerHTML = '<div class="info-message">Esperando a que los demás voten...</div>';
+      }
+    }
+  </script>
+</body>
+</html>
