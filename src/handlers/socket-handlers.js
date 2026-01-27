@@ -10,6 +10,7 @@ const {
     processVotes,
     checkGameWinner
 } = require('../logic/game-logic');
+const { categoryNames } = require('../data/game-data');
 const {
     createRoom,
     addPlayerToRoom,
@@ -45,7 +46,8 @@ function registerSocketHandlers(io, rooms) {
 
             socket.emit('roomCreated', {
                 roomCode: roomCode,
-                room: getRoomPublicInfo(room)
+                room: getRoomPublicInfo(room),
+                categories: categoryNames
             });
 
             io.to(roomCode).emit('playersUpdated', room.players);
@@ -74,7 +76,7 @@ function registerSocketHandlers(io, rooms) {
             console.log(`[${new Date().toLocaleTimeString()}] ${data.username} se unió a ${data.roomCode}`);
 
             io.to(data.roomCode).emit('playersUpdated', room.players);
-            socket.emit('joinedRoom', { roomCode: data.roomCode, room: getRoomPublicInfo(room) });
+            socket.emit('joinedRoom', { roomCode: data.roomCode, room: getRoomPublicInfo(room), categories: categoryNames });
         });
 
         // ========== ACTUALIZAR CONFIGURACIÓN ==========
