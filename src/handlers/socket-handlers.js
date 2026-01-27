@@ -444,9 +444,8 @@ function registerSocketHandlers(io, rooms) {
                 }
                 break;
             }
-        }
         });
-});
-}
+    });
+};
 
 module.exports = { registerSocketHandlers };
