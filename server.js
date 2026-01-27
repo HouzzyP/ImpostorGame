@@ -475,7 +475,7 @@ io.on('connection', (socket) => {
         room.votes = {};
         room.roundNumber = 1;
 
-        io.to(roomCode).emit('gameReset', { categories: categoryNames });
+        io.to(roomCode).emit('gameResetToLobby', { categories: categoryNames });
         io.to(roomCode).emit('playerListUpdate', room.players);
     });
 
