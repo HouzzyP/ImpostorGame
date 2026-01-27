@@ -600,13 +600,18 @@
       updateVotingUI(votingOrder, currentVoterIndex, {});
     });
 
-    socket.on('voteCast', ({ voterId, voterName, votedForId, votedForName, votes }) => {
+    socket.on('voteCast', ({ voterId, voterName, votedForId, votedForName, votes, votingOrder, currentVoterIndex, votingFinished }) => {
       const votesDisplay = document.getElementById('votesDisplay');
       votesDisplay.innerHTML += `<div class="vote-count"><span>${voterName} votó a ${votedForName}</span></div>`;
+      
+      // Actualizar UI para el siguiente votante (si no terminó)
+      if (!votingFinished && currentVoterIndex < votingOrder.length) {
+        updateVotingUI(votingOrder, currentVoterIndex, votes);
+      }
     });
 
     socket.on('nextVoter', ({ currentVoterIndex, voterId }) => {
-      // Se actualiza en el frontend
+      // Se actualiza en voteCast ahora
     });
 
     socket.on('playerEliminated', ({ playerId, playerName, wasImpostor, votes }) => {
@@ -674,12 +679,14 @@
       
       const votingButtons = document.getElementById('votingButtons');
       
-      if (currentVoterId === myPlayerId && myRole && myRole.isImpostor === false || currentVoterId === myPlayerId) {
+      if (currentVoterId === myPlayerId) {
+        // Es mi turno, mostrar botones para votar
         const alivePlayers = votingOrder.filter(p => p.id !== myPlayerId);
         votingButtons.innerHTML = alivePlayers.map(p => `
           <button class="vote-button" onclick="castVote('${p.id}')">${p.name}</button>
         `).join('');
       } else {
+        // No es mi turno, mostrar mensaje de espera
         votingButtons.innerHTML = '<div class="info-message">Esperando a que los demás voten...</div>';
       }
     }

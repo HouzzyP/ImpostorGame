@@ -265,17 +265,13 @@ io.on('connection', (socket) => {
       voterName: voter.name,
       votedForId: votedForId,
       votedForName: room.players.find(p => p.id === votedForId).name,
-      votes: room.votes
+      votes: room.votes,
+      votingOrder: room.votingOrder.map(id => {
+        const player = room.players.find(p => p.id === id);
+        return { id: player.id, name: player.name };
+      }),
+      currentVoterIndex: room.currentVoterIndex
     });
-
-    room.currentVoterIndex++;
-
-    if (room.currentVoterIndex < room.votingOrder.length) {
-      io.to(roomCode).emit('nextVoter', {
-        currentVoterIndex: room.currentVoterIndex,
-        voterId: room.votingOrder[room.currentVoterIndex]
-      });
-    } else {
       // Votación terminada
       finishVoting(room, roomCode);
     }
