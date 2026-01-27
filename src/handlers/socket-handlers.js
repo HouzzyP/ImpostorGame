@@ -10,7 +10,7 @@ const {
     processVotes,
     checkGameWinner
 } = require('../logic/game-logic');
-const { categoryNames } = require('../data/game-data');
+const { wordDatabase, categoryNames } = require('../data/game-data');
 const {
     createRoom,
     addPlayerToRoom,
@@ -20,7 +20,6 @@ const {
     resetRoomForNewRound,
     getRoomPublicInfo
 } = require('../managers/room-manager');
-const { wordDatabase, categoryNames } = require('../data/game-data');
 
 /**
  * Registra todos los manejadores de Socket.IO
