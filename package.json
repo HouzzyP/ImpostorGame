@@ -1,17 +1,29 @@
 {
-  "name": "el-impostor",
-  "version": "2.0.0",
-  "description": "Juego multijugador de deduccion social",
-  "main": "server.js",
-  "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js"
-  },
-  "dependencies": {
-    "express": "^4.18.2",
-    "socket.io": "^4.6.1"
-  },
-  "engines": {
-    "node": ">=16.0.0"
-  }
+    "name": "el-impostor",
+    "version": "2.0.0",
+    "description": "Juego multijugador de deduccion social",
+    "main": "server.js",
+    "scripts": {
+        "start": "node server.js",
+        "dev": "node server.js",
+        "dev:watch": "nodemon server.js"
+    },
+    "keywords": [
+        "game",
+        "multiplayer",
+        "socket.io",
+        "realtime"
+    ],
+    "author": "",
+    "license": "MIT",
+    "dependencies": {
+        "express": "^4.18.2",
+        "socket.io": "^4.6.1"
+    },
+    "devDependencies": {
+        "nodemon": "^3.1.11"
+    },
+    "engines": {
+        "node": ">=16.0.0"
+    }
 }

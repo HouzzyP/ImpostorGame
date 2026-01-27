@@ -279,6 +279,13 @@ socket.on('playerEliminated', ({ playerName, wasImpostor }) => {
     showScreen('eliminationScreen');
 });
 
+socket.on('tieVoting', ({ votes }) => {
+    const bannerId = document.getElementById('eliminatedName');
+    bannerId.textContent = '¡EMPATE!';
+    document.getElementById('eliminatedRole').textContent = 'Nadie fue eliminado';
+    showScreen('eliminationScreen');
+});
+
 socket.on('continueGame', ({ alivePlayers, roundNumber }) => {
     updateRoleDisplay('Game', myRole.isImpostor, myRole.word, null);
     document.getElementById('alivePlayersList').innerHTML = alivePlayers.map(p => `

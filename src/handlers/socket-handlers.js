@@ -1,0 +1,302 @@
+// Manejadores de eventos Socket.IO
+const {
+    generateRoomCode,
+    getRandomCategory,
+    getRandomWord
+} = require('../utils/utils');
+const {
+    assignRoles,
+    assignWordAndCategory,
+    processVotes,
+    checkGameWinner
+} = require('../logic/game-logic');
+const {
+    createRoom,
+    addPlayerToRoom,
+    removePlayerFromRoom,
+    getPlayerFromRoom,
+    getRoomHost,
+    resetRoomForNewRound,
+    getRoomPublicInfo
+} = require('../managers/room-manager');
+const { wordDatabase, categoryNames } = require('../data/game-data');
+
+/**
+ * Registra todos los manejadores de Socket.IO
+ * @param {Object} io - Socket.IO instance
+ * @param {Map} rooms - Map de salas
+ */
+function registerSocketHandlers(io, rooms) {
+    io.on('connection', (socket) => {
+        console.log(`[${new Date().toLocaleTimeString()}] Usuario conectado: ${socket.id}`);
+
+        // ========== CREAR SALA ==========
+        socket.on('createRoom', (data) => {
+            let roomCode;
+            do {
+                roomCode = generateRoomCode();
+            } while (rooms.has(roomCode));
+
+            const room = createRoom(roomCode, { id: socket.id, username: data.username });
+            rooms.set(roomCode, room);
+            socket.join(roomCode);
+
+            console.log(`[${new Date().toLocaleTimeString()}] Sala creada: ${roomCode}`);
+
+            socket.emit('roomCreated', {
+                roomCode: roomCode,
+                room: getRoomPublicInfo(room)
+            });
+
+            io.to(roomCode).emit('playersUpdated', room.players);
+        });
+
+        // ========== UNIRSE A SALA ==========
+        socket.on('joinRoom', (data) => {
+            const room = rooms.get(data.roomCode);
+
+            if (!room) {
+                socket.emit('error', 'La sala no existe');
+                return;
+            }
+
+            if (room.gameState !== 'waiting') {
+                socket.emit('error', 'El juego ya ha comenzado');
+                return;
+            }
+
+            if (!addPlayerToRoom(room, { id: socket.id, username: data.username })) {
+                socket.emit('error', 'La sala está llena');
+                return;
+            }
+
+            socket.join(data.roomCode);
+            console.log(`[${new Date().toLocaleTimeString()}] ${data.username} se unió a ${data.roomCode}`);
+
+            io.to(data.roomCode).emit('playersUpdated', room.players);
+            socket.emit('joinedRoom', { roomCode: data.roomCode, room: getRoomPublicInfo(room) });
+        });
+
+        // ========== ACTUALIZAR CONFIGURACIÓN ==========
+        socket.on('updateConfig', (data) => {
+            const room = rooms.get(data.roomCode);
+            if (!room) return;
+
+            const player = getPlayerFromRoom(room, socket.id);
+            if (player && player.isHost) {
+                room.config = { ...room.config, ...data.config };
+                io.to(data.roomCode).emit('configUpdated', room.config);
+            }
+        });
+
+        // ========== CATEGORÍA ALEATORIA ==========
+        socket.on('randomCategory', (data) => {
+            const room = rooms.get(data.roomCode);
+            if (!room) return;
+
+            const randomCat = getRandomCategory(categoryNames);
+            io.to(data.roomCode).emit('categorySelected', {
+                categoryKey: randomCat,
+                categoryName: categoryNames[randomCat]
+            });
+        });
+
+        // ========== INICIAR JUEGO ==========
+        socket.on('startGame', (data) => {
+            const room = rooms.get(data.roomCode);
+            if (!room) return;
+
+            const player = getPlayerFromRoom(room, socket.id);
+            if (player && player.isHost) {
+                room.gameState = 'starting';
+                room.currentRound = 1;
+
+                // Determinar categoría y palabra
+                let categoryKey = room.config.category;
+                if (categoryKey === 'random') {
+                    categoryKey = getRandomCategory(categoryNames);
+                }
+
+                const words = wordDatabase[categoryKey];
+                const word = getRandomWord(words);
+                room.word = word;
+                room.category = categoryKey;
+
+                // Asignar roles
+                room.players = assignRoles(room.players);
+                room.players = assignWordAndCategory(room.players, categoryKey, word);
+
+                io.to(data.roomCode).emit('gameStarted', { category: categoryNames[categoryKey] });
+
+                // Enviar información privada a cada jugador
+                room.players.forEach(p => {
+                    const playerSocket = io.sockets.sockets.get(p.id);
+                    if (playerSocket) {
+                        playerSocket.emit('yourRole', {
+                            role: p.role,
+                            word: p.word,
+                            category: p.category
+                        });
+                    }
+                });
+
+                room.gameState = 'playing';
+                room.discussionEndTime = Date.now() + room.config.discussionTime * 1000;
+                io.to(data.roomCode).emit('gameState', {
+                    state: 'discussing',
+                    timeRemaining: room.config.discussionTime
+                });
+
+                console.log(
+                    `[${new Date().toLocaleTimeString()}] Juego iniciado en ${data.roomCode}. Palabra: ${word} (${categoryKey})`
+                );
+            }
+        });
+
+        // ========== INICIAR VOTACIÓN ==========
+        socket.on('startVoting', (data) => {
+            const room = rooms.get(data.roomCode);
+            if (!room) return;
+
+            room.votes = [];
+            room.gameState = 'voting';
+            room.votingEndTime = Date.now() + room.config.votingTime * 1000;
+
+            io.to(data.roomCode).emit('votingStarted', {
+                players: room.players.filter(p => p.alive).map(p => ({
+                    id: p.id,
+                    username: p.username
+                })),
+                timeRemaining: room.config.votingTime
+            });
+        });
+
+        // ========== EMITIR VOTO ==========
+        socket.on('castVote', (data) => {
+            const room = rooms.get(data.roomCode);
+            if (!room || room.gameState !== 'voting') return;
+
+            const voter = getPlayerFromRoom(room, socket.id);
+            if (!voter) return;
+
+            // Registrar voto (reemplazar si ya votó)
+            const existingVoteIndex = room.votes.findIndex(v => v.voterId === socket.id);
+            if (existingVoteIndex > -1) {
+                room.votes[existingVoteIndex].votedFor = data.votedFor;
+            } else {
+                room.votes.push({
+                    voterId: socket.id,
+                    voterName: voter.username,
+                    votedFor: data.votedFor
+                });
+            }
+
+            // Notificar votación actualizada
+            io.to(data.roomCode).emit('votesCasted', {
+                totalVotes: room.votes.length,
+                totalPlayers: room.players.filter(p => p.alive).length
+            });
+        });
+
+        // ========== FINALIZAR VOTACIÓN ==========
+        socket.on('finishVoting', (data) => {
+            const room = rooms.get(data.roomCode);
+            if (!room) return;
+
+            room.gameState = 'ending';
+
+            const voteResult = processVotes(room, io);
+
+            if (voteResult.isTie) {
+                // Hay empate - no se elimina a nadie
+                io.to(data.roomCode).emit('tieVoting', {
+                    players: voteResult.votedPlayers,
+                    message: 'Empate! Nadie fue eliminado. El juego continúa.'
+                });
+            } else {
+                // Se elimina a alguien
+                const eliminatedPlayer = getPlayerFromRoom(room, voteResult.eliminated);
+                if (eliminatedPlayer) {
+                    eliminatedPlayer.alive = false;
+
+                    io.to(data.roomCode).emit('playerEliminated', {
+                        eliminated: voteResult.eliminated,
+                        username: eliminatedPlayer.username,
+                        role: eliminatedPlayer.role,
+                        impostorFound: voteResult.impostorFound
+                    });
+                }
+
+                // Verificar si el juego terminó
+                const winCondition = checkGameWinner(room);
+                if (winCondition.gameOver) {
+                    room.gameWinner = winCondition;
+                    io.to(data.roomCode).emit('gameEnded', {
+                        winner: winCondition.winner,
+                        reason: winCondition.reason,
+                        stats: room.players.map(p => ({
+                            username: p.username,
+                            role: p.role,
+                            alive: p.alive
+                        }))
+                    });
+                }
+            }
+        });
+
+        // ========== REINICIAR JUEGO ==========
+        socket.on('resetGame', (data) => {
+            const room = rooms.get(data.roomCode);
+            if (!room) return;
+
+            const player = getPlayerFromRoom(room, socket.id);
+            if (player && player.isHost) {
+                resetRoomForNewRound(room);
+                io.to(data.roomCode).emit('gameResetToLobby', {
+                    room: getRoomPublicInfo(room)
+                });
+            }
+        });
+
+        // ========== CONTINUAR EN LA SALA ==========
+        socket.on('continueInRoom', (data) => {
+            const room = rooms.get(data.roomCode);
+            if (!room) return;
+
+            resetRoomForNewRound(room);
+            io.to(data.roomCode).emit('gameResetToLobby', {
+                room: getRoomPublicInfo(room)
+            });
+        });
+
+        // ========== DESCONECTAR ==========
+        socket.on('disconnect', () => {
+            console.log(`[${new Date().toLocaleTimeString()}] Usuario desconectado: ${socket.id}`);
+
+            // Buscar y limpiar la sala
+            for (const [roomCode, room] of rooms.entries()) {
+                const playerToRemove = getPlayerFromRoom(room, socket.id);
+
+                if (playerToRemove) {
+                    // Si es el anfitrión, eliminar la sala
+                    if (playerToRemove.isHost) {
+                        io.to(roomCode).emit('hostDisconnected', {
+                            message: 'El anfitrión se desconectó. La sala será cerrada.'
+                        });
+                        rooms.delete(roomCode);
+                        console.log(`[${new Date().toLocaleTimeString()}] Sala ${roomCode} eliminada`);
+                        io.socketsLeave(roomCode);
+                    } else {
+                        // Si es un jugador normal, solo removerlo
+                        removePlayerFromRoom(room, socket.id);
+                        io.to(roomCode).emit('playersUpdated', room.players);
+                        console.log(`[${new Date().toLocaleTimeString()}] Jugador removido de ${roomCode}`);
+                    }
+                    break;
+                }
+            }
+        });
+    });
+}
+
+module.exports = { registerSocketHandlers };
