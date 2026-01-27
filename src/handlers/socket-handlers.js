@@ -49,7 +49,7 @@ function registerSocketHandlers(io, rooms) {
                 categories: categoryNames
             });
 
-            io.to(roomCode).emit('playersUpdated', room.players);
+            io.to(roomCode).emit('playerListUpdate', room.players);
         });
 
         // ========== UNIRSE A SALA ==========
@@ -74,8 +74,8 @@ function registerSocketHandlers(io, rooms) {
             socket.join(data.roomCode);
             console.log(`[${new Date().toLocaleTimeString()}] ${data.username} se unió a ${data.roomCode}`);
 
-            io.to(data.roomCode).emit('playersUpdated', room.players);
-            socket.emit('joinedRoom', { roomCode: data.roomCode, room: getRoomPublicInfo(room), categories: categoryNames });
+            io.to(data.roomCode).emit('playerListUpdate', room.players);
+            socket.emit('roomJoined', { roomCode: data.roomCode, room: getRoomPublicInfo(room), categories: categoryNames });
         });
 
         // ========== ACTUALIZAR CONFIGURACIÓN ==========
@@ -86,7 +86,7 @@ function registerSocketHandlers(io, rooms) {
             const player = getPlayerFromRoom(room, socket.id);
             if (player && player.isHost) {
                 room.config = { ...room.config, ...data.config };
-                io.to(data.roomCode).emit('configUpdated', room.config);
+                io.to(data.roomCode).emit('configUpdate', room.config);
             }
         });
 
@@ -290,7 +290,7 @@ function registerSocketHandlers(io, rooms) {
                     } else {
                         // Si es un jugador normal, solo removerlo
                         removePlayerFromRoom(room, socket.id);
-                        io.to(roomCode).emit('playersUpdated', room.players);
+                        io.to(roomCode).emit('playerListUpdate', room.players);
                         console.log(`[${new Date().toLocaleTimeString()}] Jugador removido de ${roomCode}`);
                     }
                     break;
