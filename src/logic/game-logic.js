@@ -99,7 +99,7 @@ function checkGameWinner(room) {
     if (aliveImpostors.length === 0) {
         return {
             gameOver: true,
-            winner: 'civiles',
+            winner: 'innocents',
             reason: 'El impostor fue encontrado'
         };
     }
@@ -108,7 +108,7 @@ function checkGameWinner(room) {
     if (aliveImpostors.length >= aliveCivils.length) {
         return {
             gameOver: true,
-            winner: 'impostores',
+            winner: 'impostors',
             reason: 'Los impostores se han apoderado de la sala'
         };
     }

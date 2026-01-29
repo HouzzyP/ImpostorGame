@@ -14,11 +14,13 @@ const { wordDatabase, categoryNames } = require('../data/game-data');
 const {
     createRoom,
     addPlayerToRoom,
+    addSpectator,
     removePlayerFromRoom,
     getPlayerFromRoom,
     getRoomHost,
     resetRoomForNewRound,
-    getRoomPublicInfo
+    getRoomPublicInfo,
+    updateRoomStats
 } = require('../managers/room-manager');
 
 /**
@@ -70,9 +72,23 @@ function registerSocketHandlers(io, rooms) {
 
             // Permitir unirse como espectador si el juego ya empezó
             if (room.gameState !== 'waiting') {
+                addSpectator(room, { id: socket.id, username: data.username });
                 socket.join(data.roomCode);
                 console.log(`[${new Date().toLocaleTimeString()}] ${data.username} se unió como espectador a ${data.roomCode}`);
-                socket.emit('roomJoined', { roomCode: data.roomCode, room: getRoomPublicInfo(room), categories: categoryNames, isSpectator: true });
+
+                // Enviar estado actual completo al espectador
+                socket.emit('roomJoined', {
+                    roomCode: data.roomCode,
+                    room: getRoomPublicInfo(room),
+                    categories: categoryNames,
+                    isSpectator: true,
+                    // Enviar datos extra para sincronización
+                    currentPeriod: {
+                        state: room.gameState,
+                        players: room.players,
+                        config: room.config
+                    }
+                });
                 io.to(data.roomCode).emit('spectatorJoined', { username: data.username });
                 return;
             }
@@ -163,6 +179,21 @@ function registerSocketHandlers(io, rooms) {
                     }
                 });
 
+                // Notificar a los espectadores
+                room.spectators.forEach(s => {
+                    const specSocket = io.sockets.sockets.get(s.id);
+                    if (specSocket) {
+                        const players = room.players.map(player => ({
+                            id: player.id,
+                            username: player.username
+                        }));
+                        specSocket.emit('spectatorGameStart', {
+                            players: players,
+                            category: categoryNames[categoryKey]
+                        });
+                    }
+                });
+
                 room.gameState = 'playing';
                 room.discussionEndTime = Date.now() + room.config.discussionTime * 1000;
                 io.to(data.roomCode).emit('gameState', {
@@ -238,12 +269,23 @@ function registerSocketHandlers(io, rooms) {
                 const voteResult = processVotes(room, io);
 
                 if (voteResult.isTie) {
+                    // Contar votos correctos ANTES de resetear (incluso en empate)
+                    const impostorIds = room.players.filter(p => p.role === 'impostor').map(p => p.id);
+                    const correctVoters = room.votes
+                        .filter(v => impostorIds.includes(v.votedFor))
+                        .map(v => v.voterId);
+                    if (correctVoters.length > 0) {
+                        updateRoomStats(room, { correctVoters });
+                    }
+                    io.to(data.roomCode).emit('statsUpdate', room.players.map(p => ({ id: p.id, username: p.username, stats: p.stats })));
+
                     io.to(data.roomCode).emit('tieVoting', {
                         players: voteResult.votedPlayers,
                         message: 'Empate! Nadie fue eliminado. El juego continúa.'
                     });
                     // Volver al juego después del empate
                     room.gameState = 'playing';
+                    room.currentRound++;
                     room.votes = [];
                     room.discussionEndTime = Date.now() + room.config.discussionTime * 1000;
                     io.to(data.roomCode).emit('continueGame', {
@@ -257,6 +299,11 @@ function registerSocketHandlers(io, rooms) {
 
                         const winCondition = checkGameWinner(room);
                         const gameOver = winCondition.gameOver;
+
+                        // DEBUG: Log game state
+                        console.log('[DEBUG] Player eliminated:', eliminatedPlayer.username, 'was impostor:', eliminatedPlayer.role === 'impostor');
+                        console.log('[DEBUG] Alive players:', room.players.filter(p => p.alive).map(p => ({ name: p.username, role: p.role })));
+                        console.log('[DEBUG] winCondition:', winCondition);
 
                         io.to(data.roomCode).emit('playerEliminated', {
                             playerName: eliminatedPlayer.username,
@@ -274,14 +321,37 @@ function registerSocketHandlers(io, rooms) {
 
                         if (!gameOver) {
                             // Juego continúa, volver a la pantalla de juego
+                            // Contar todos los votos que fueron para un impostor (independiente de quién fue eliminado)
+                            const impostorIds = room.players.filter(p => p.role === 'impostor').map(p => p.id);
+                            const correctVoters = room.votes
+                                .filter(v => impostorIds.includes(v.votedFor))
+                                .map(v => v.voterId);
+                            if (correctVoters.length > 0) {
+                                updateRoomStats(room, { correctVoters });
+                            }
+                            io.to(data.roomCode).emit('statsUpdate', room.players.map(p => ({ id: p.id, username: p.username, stats: p.stats })));
+
                             room.gameState = 'playing';
                             room.currentRound++;
+                            room.votes = []; // Reset votes for next round
                             room.discussionEndTime = Date.now() + room.config.discussionTime * 1000;
                             io.to(data.roomCode).emit('continueGame', {
                                 alivePlayers: room.players.filter(p => p.alive),
                                 roundNumber: room.currentRound
                             });
                         } else {
+                            // Juego terminó
+                            const impostorIds = room.players.filter(p => p.role === 'impostor').map(p => p.id);
+                            const correctVoters = room.votes
+                                .filter(v => impostorIds.includes(v.votedFor))
+                                .map(v => v.voterId);
+                            updateRoomStats(room, {
+                                winner: winCondition.winner,
+                                gameEnded: true,
+                                correctVoters
+                            });
+                            io.to(data.roomCode).emit('statsUpdate', room.players.map(p => ({ id: p.id, username: p.username, stats: p.stats })));
+
                             room.gameWinner = winCondition;
                         }
                     }
@@ -328,6 +398,16 @@ function registerSocketHandlers(io, rooms) {
             const voteResult = processVotes(room, io);
 
             if (voteResult.isTie) {
+                // Contar votos correctos ANTES de resetear (incluso en empate)
+                const impostorIds = room.players.filter(p => p.role === 'impostor').map(p => p.id);
+                const correctVoters = room.votes
+                    .filter(v => impostorIds.includes(v.votedFor))
+                    .map(v => v.voterId);
+                if (correctVoters.length > 0) {
+                    updateRoomStats(room, { correctVoters });
+                }
+                io.to(data.roomCode).emit('statsUpdate', room.players.map(p => ({ id: p.id, username: p.username, stats: p.stats })));
+
                 // Hay empate - no se elimina a nadie
                 io.to(data.roomCode).emit('tieVoting', {
                     players: voteResult.votedPlayers,
@@ -335,6 +415,7 @@ function registerSocketHandlers(io, rooms) {
                 });
                 // Volver al juego después del empate
                 room.gameState = 'playing';
+                room.currentRound++;
                 room.votes = [];
                 room.discussionEndTime = Date.now() + room.config.discussionTime * 1000;
                 io.to(data.roomCode).emit('continueGame', {
@@ -366,14 +447,36 @@ function registerSocketHandlers(io, rooms) {
 
                     if (!gameOver) {
                         // Juego continúa, volver a la pantalla de juego
+                        const impostorIds = room.players.filter(p => p.role === 'impostor').map(p => p.id);
+                        const correctVoters = room.votes
+                            .filter(v => impostorIds.includes(v.votedFor))
+                            .map(v => v.voterId);
+                        if (correctVoters.length > 0) {
+                            updateRoomStats(room, { correctVoters });
+                        }
+                        io.to(data.roomCode).emit('statsUpdate', room.players.map(p => ({ id: p.id, username: p.username, stats: p.stats })));
+
                         room.gameState = 'playing';
                         room.currentRound++;
+                        room.votes = []; // Reset votes for next round
                         room.discussionEndTime = Date.now() + room.config.discussionTime * 1000;
                         io.to(data.roomCode).emit('continueGame', {
                             alivePlayers: room.players.filter(p => p.alive),
                             roundNumber: room.currentRound
                         });
                     } else {
+                        // Juego terminó
+                        const impostorIds = room.players.filter(p => p.role === 'impostor').map(p => p.id);
+                        const correctVoters = room.votes
+                            .filter(v => impostorIds.includes(v.votedFor))
+                            .map(v => v.voterId);
+                        updateRoomStats(room, {
+                            winner: winCondition.winner,
+                            gameEnded: true,
+                            correctVoters
+                        });
+                        io.to(data.roomCode).emit('statsUpdate', room.players.map(p => ({ id: p.id, username: p.username, stats: p.stats })));
+
                         room.gameWinner = winCondition;
                     }
                 }
@@ -401,6 +504,10 @@ function registerSocketHandlers(io, rooms) {
         socket.on('continueInRoom', (data) => {
             const room = rooms.get(data.roomCode);
             if (!room) return;
+
+            // Solo el host puede reiniciar la sala
+            const player = getPlayerFromRoom(room, socket.id);
+            if (!player || !player.isHost) return;
 
             resetRoomForNewRound(room);
             io.to(data.roomCode).emit('gameResetToLobby', {

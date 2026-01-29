@@ -122,7 +122,7 @@ function updateConfig() {
 }
 
 function randomCategory() {
-    socket.emit('randomCategory', currentRoom);
+    socket.emit('randomCategory', { roomCode: currentRoom });
 }
 
 // ============================================
@@ -178,13 +178,10 @@ function continueGame() {
         if (pendingNextState.type === 'continueGame') {
             const { alivePlayers, roundNumber } = pendingNextState.payload;
             updateRoleDisplay('Game', myRole.isImpostor, myRole.word, null);
-            document.getElementById('alivePlayersList').innerHTML = alivePlayers.map(p => `
-                <div class="player-item"><span class="player-name">${escapeHtml(p.username)}</span></div>
-            `).join('');
             document.getElementById('roundNumber').textContent = roundNumber;
 
-            // Reinitializar el panel de jugadores en vivo con los jugadores aún vivos
-            initLivePlayersPanel(alivePlayers);
+            // Solo resetear estados de votos, no reinicializar (evita flicker)
+            resetVotesInPanel();
 
             document.getElementById('startVotingBtn').style.display = isHost ? 'block' : 'none';
             document.getElementById('waitingVoteMessage').style.display = isHost ? 'none' : 'block';
@@ -195,7 +192,7 @@ function continueGame() {
             const title = document.getElementById('winnerTitle');
             const msg = document.getElementById('winnerMessage');
 
-            if (winner === 'innocents' || winner === 'civiles') {
+            if (winner === 'innocents') {
                 banner.className = 'result-banner innocents';
                 title.textContent = 'Ganaron los inocentes';
                 msg.textContent = 'Todos los impostores fueron eliminados';
@@ -255,32 +252,18 @@ function initLivePlayersPanel(players) {
     players.forEach(p => {
         livePlayersState[p.id] = { username: p.username, alive: true, voted: false };
     });
+    // Mostrar el panel global
+    const globalPanel = document.getElementById('globalLivePlayersPanel');
+    if (globalPanel) globalPanel.style.display = 'block';
     updateLivePlayersPanel();
 }
 
 function updateLivePlayersPanel() {
-    // Actualizar panel en gameScreen
-    const panel = document.getElementById('livePlayersList');
+    // Actualizar panel global (persistente durante todo el juego)
+    const panel = document.getElementById('globalLivePlayersList');
     if (panel) {
         const playerIds = Object.keys(livePlayersState);
         panel.innerHTML = playerIds.map(id => {
-            const p = livePlayersState[id];
-            const statusClass = !p.alive ? 'eliminated' : (p.voted ? 'voted' : 'alive');
-            const statusText = p.voted ? '✓' : (p.alive ? '●' : '✗');
-            return `
-                <div class="live-player-item ${statusClass}">
-                    <span class="live-player-name">${escapeHtml(p.username)}</span>
-                    <span class="live-player-status">${statusText}</span>
-                </div>
-            `;
-        }).join('');
-    }
-
-    // Actualizar panel en votingScreen
-    const votingPanel = document.getElementById('livePlayersListVoting');
-    if (votingPanel) {
-        const playerIds = Object.keys(livePlayersState);
-        votingPanel.innerHTML = playerIds.map(id => {
             const p = livePlayersState[id];
             const statusClass = !p.alive ? 'eliminated' : (p.voted ? 'voted' : 'alive');
             const statusText = p.voted ? '✓' : (p.alive ? '●' : '✗');
@@ -310,11 +293,19 @@ function markPlayerEliminated(playerId) {
 
 function clearLivePlayersPanel() {
     livePlayersState = {};
-    const panel = document.getElementById('livePlayersList');
-    if (panel) panel.innerHTML = '';
+    const globalPanel = document.getElementById('globalLivePlayersPanel');
+    if (globalPanel) {
+        globalPanel.style.display = 'none';
+        document.getElementById('globalLivePlayersList').innerHTML = '';
+    }
+}
 
-    const votingPanel = document.getElementById('livePlayersListVoting');
-    if (votingPanel) votingPanel.innerHTML = '';
+// Reset vote states for a new round (without reinitializing the panel)
+function resetVotesInPanel() {
+    Object.values(livePlayersState).forEach(p => {
+        p.voted = false;
+    });
+    updateLivePlayersPanel();
 }
 
 function updateRoleDisplay(prefix, isImpostor, word, category) {
@@ -342,6 +333,17 @@ function updateVotingUI(votingOrder, currentVoterIndex) {
     status.classList.toggle('my-turn', isMyTurn);
     document.getElementById('currentVoterDisplay').textContent = isMyTurn ? 'Es tu turno' : 'Turno de ' + current.username;
 
+    // Actualizar orden con badges de estado
+    const orderDisplay = document.getElementById('descriptionOrderDisplay');
+    if (orderDisplay && votingOrder.length > 0) {
+        orderDisplay.innerHTML = votingOrder.map((p, i) => {
+            let className = '';
+            if (i < currentVoterIndex) className = 'done';
+            else if (i === currentVoterIndex) className = 'current';
+            return `<span class="${className}">${escapeHtml(p.username)}</span>`;
+        }).join('');
+    }
+
     const btns = document.getElementById('votingButtons');
     if (isMyTurn) {
         btns.innerHTML = votingOrder
@@ -363,10 +365,16 @@ socket.on('roomCreated', ({ roomCode, room, categories: cats }) => {
     isHost = true;
     populateCategories(cats);
     document.getElementById('roomCodeDisplay').textContent = roomCode;
+
+    // Chat Setup
+    document.getElementById('chatToggleBtn').style.display = 'block';
+    document.getElementById('chatMessages').innerHTML = '<div class="chat-system-msg">¡Bienvenido al chat!</div>';
+    document.getElementById('chatContainer').style.display = 'flex'; // Open by default
+
     showScreen('lobbyHostScreen');
 });
 
-socket.on('roomJoined', ({ roomCode, room, categories: cats, isSpectator: spec }) => {
+socket.on('roomJoined', ({ roomCode, room, categories: cats, isSpectator: spec, currentPeriod }) => {
     currentRoom = roomCode;
     myPlayerId = socket.id;
     isHost = false;
@@ -374,9 +382,20 @@ socket.on('roomJoined', ({ roomCode, room, categories: cats, isSpectator: spec }
     categories = cats;
     document.getElementById('roomCodePlayer').textContent = roomCode;
 
+    // Chat Setup
+    document.getElementById('chatToggleBtn').style.display = 'block';
+    document.getElementById('chatMessages').innerHTML = '<div class="chat-system-msg">¡Bienvenido al chat!</div>';
+    document.getElementById('chatContainer').style.display = 'flex'; // Open by default
+
     if (isSpectator) {
         toast('Unido como espectador');
-        showScreen('spectatorScreen');
+        // Handle Mid-Game Join
+        if (currentPeriod) {
+            handleMidGameJoin(currentPeriod);
+        } else {
+            showScreen('spectatorScreen');
+            document.getElementById('roomCodeSpectator').textContent = roomCode;
+        }
     } else {
         showScreen('lobbyPlayerScreen');
     }
@@ -385,7 +404,16 @@ socket.on('roomJoined', ({ roomCode, room, categories: cats, isSpectator: spec }
 socket.on('playerListUpdate', (players) => {
     const count = players.length;
     const me = players.find(p => p.id === myPlayerId);
-    if (me) isHost = me.isHost;
+    if (me) {
+        isHost = me.isHost;
+        // If I was a spectator and now I'm in the player list, I've been promoted!
+        if (isSpectator) {
+            isSpectator = false;
+            toast('¡Te has unido a la partida!');
+            // Refresh screen to lobby
+            showScreen('lobbyPlayerScreen');
+        }
+    }
 
     if (isHost) {
         document.getElementById('playerCount').textContent = count;
@@ -395,11 +423,35 @@ socket.on('playerListUpdate', (players) => {
         document.getElementById('playerCountPlayer').textContent = count;
         renderPlayerList(players, 'playerListPlayer');
     }
+
+    // Update roomStats from player list (includes stats)
+    roomStats = players.map(p => ({
+        id: p.id,
+        username: p.username,
+        stats: p.stats || { impostorWins: 0, innocentWins: 0, gamesPlayed: 0, correctVotes: 0 }
+    }));
+    updateLobbyLeaderboard();
 });
 
 socket.on('configUpdate', (config) => {
     document.getElementById('categorySelect').value = config.category;
     document.getElementById('impostorCountSelect').value = config.impostorCount;
+});
+
+socket.on('categorySelected', ({ categoryKey }) => {
+    document.getElementById('categorySelect').value = categoryKey;
+    // Also update config on server
+    updateConfig();
+});
+
+socket.on('statsUpdate', (players) => {
+    // Update roomStats with new stats from server
+    roomStats = players.map(p => ({
+        id: p.id,
+        username: p.username,
+        stats: p.stats || { impostorWins: 0, innocentWins: 0, gamesPlayed: 0, correctVotes: 0 }
+    }));
+    updateLobbyLeaderboard();
 });
 
 socket.on('becameHost', () => {
@@ -429,13 +481,13 @@ socket.on('yourRole', ({ isImpostor, word, category, players }) => {
 socket.on('gameStarted', ({ category, descriptionOrder: order }) => {
     descriptionOrder = order || [];
 
-    // Mostrar orden de descripción
+    // Mostrar orden de descripción inicial (sin estado aun)
     if (descriptionOrder.length > 0) {
         const orderDisplay = document.getElementById('descriptionOrderDisplay');
         if (orderDisplay) {
-            orderDisplay.innerHTML = descriptionOrder.map((p, i) => `
-                <div class="order-item">${i + 1}. ${escapeHtml(p.username)}</div>
-            `).join('');
+            orderDisplay.innerHTML = descriptionOrder.map((p) =>
+                `<span>${escapeHtml(p.username)}</span>`
+            ).join('');
         }
     }
 
@@ -451,8 +503,14 @@ socket.on('votingStarted', ({ votingOrder, currentVoterIndex }) => {
     Object.values(livePlayersState).forEach(p => { p.voted = false; });
     updateLivePlayersPanel();
 
-    updateVotingUI(votingOrder, currentVoterIndex);
-    document.getElementById('finishVotingBtn').style.display = isHost ? 'block' : 'none';
+    if (isSpectator) {
+        document.getElementById('finishVotingBtn').style.display = 'none';
+        document.getElementById('votingButtons').innerHTML = '<p class="waiting">Observando votación...</p>';
+        document.getElementById('votingStatus').style.display = 'none';
+    } else {
+        updateVotingUI(votingOrder, currentVoterIndex);
+        // document.getElementById('finishVotingBtn').style.display = isHost ? 'block' : 'none';
+    }
     showScreen('votingScreen');
     startVotingTimer(); // Muestra timer de tiempo transcurrido
 });
@@ -604,11 +662,246 @@ socket.on('error', msg => {
     toast(msg, 'error');
 });
 
+// Helper to sync state for late joiners
+function handleMidGameJoin(state) {
+    const { state: gameState, players, config } = state;
+
+    // Initial live players setup
+    const alivePlayers = players.filter(p => !p.isSpectator); // Simple filter
+    initLivePlayersPanel(alivePlayers);
+
+    // Force specific screen based on state
+    if (gameState === 'playing' || gameState === 'discussing') {
+        setupSpectatorGameView('Jugando');
+    } else if (gameState === 'voting') {
+        setupSpectatorGameView('Votación en curso');
+        showScreen('votingScreen');
+        document.getElementById('finishVotingBtn').style.display = 'none';
+        document.getElementById('votingButtons').innerHTML = '<p class="waiting">Solo observando la votación...</p>';
+    } else {
+        showScreen('spectatorScreen');
+        document.getElementById('roomCodeSpectator').textContent = currentRoom;
+    }
+}
+
+function setupSpectatorGameView(statusText) {
+    showScreen('gameScreen');
+    // Hide private info
+    document.getElementById('roleCardGame').style.display = 'none';
+    document.getElementById('startVotingBtn').style.display = 'none';
+    document.getElementById('waitingVoteMessage').textContent = statusText;
+    document.getElementById('waitingVoteMessage').style.display = 'block';
+
+    // Show role as Spectator
+    const roleTitle = document.getElementById('roleTitleGame');
+    if (roleTitle) roleTitle.textContent = 'Espectador';
+}
+
+socket.on('spectatorGameStart', ({ players, category }) => {
+    toast(`Juego iniciado (Espectador) - Categoría: ${category}`);
+    const alivePlayers = players.filter(p => !p.isSpectator);
+    initLivePlayersPanel(alivePlayers);
+    setupSpectatorGameView('Observando partida...');
+});
+
 socket.on('hostDisconnected', ({ message }) => {
     toast(message, 'error');
     setTimeout(() => {
         location.reload();
     }, 2000);
+});
+
+socket.on('statsUpdate', (data) => {
+    // data: [{id, username, stats}]
+    roomStats = data;
+    updateLobbyLeaderboard();
+});
+
+// Update local stats when game ends or round ends
+socket.on('playerEliminated', (data) => {
+    // Logic:
+    // 1. Game Ended?
+    if (data.gameEnded) {
+        // Am I Impostor?
+        const roleTitle = document.getElementById('roleTitleGame');
+        const amImpostor = roleTitle && roleTitle.textContent === 'Impostor';
+
+        let updates = { gamePlayed: true, impostorWin: false, innocentWin: false, roundSurvived: false };
+
+        if ((data.winner === 'impostor' || data.winner === 'impostors') && amImpostor) updates.impostorWin = true;
+        if ((data.winner === 'innocent' || data.winner === 'innocents') && !amImpostor) updates.innocentWin = true;
+
+        updateLocalStats(updates);
+    }
+});
+
+socket.on('continueGame', (data) => {
+    // A round finished and game continues.
+    const amAlive = data.alivePlayers.some(p => p.id === socket.id);
+    if (amAlive) {
+        updateLocalStats({ roundSurvived: true });
+    }
+});
+
+// ============================================
+// STATS LOGIC
+// ============================================
+let roomStats = []; // [{id, username, stats: {impostorWins, innocentWins, roundsSurvived}}]
+
+// Inicializar estadísticas locales
+if (!localStorage.getItem('impostorStats')) {
+    localStorage.setItem('impostorStats', JSON.stringify({
+        impostorWins: 0,
+        innocentWins: 0,
+        roundsSurvived: 0,
+        gamesPlayed: 0
+    }));
+}
+
+function getLocalStats() {
+    return JSON.parse(localStorage.getItem('impostorStats'));
+}
+
+function updateLocalStats(updates) {
+    const stats = getLocalStats();
+    if (updates.impostorWin) stats.impostorWins++;
+    if (updates.innocentWin) stats.innocentWins++;
+    if (updates.roundSurvived) stats.roundsSurvived++;
+    if (updates.gamePlayed) stats.gamesPlayed++;
+
+    localStorage.setItem('impostorStats', JSON.stringify(stats));
+}
+
+function showLocalStats() {
+    const stats = getLocalStats();
+
+    // Ensure properties exist (migration for old data)
+    stats.gamesPlayed = stats.gamesPlayed || 0;
+    stats.impostorWins = stats.impostorWins || 0;
+    stats.innocentWins = stats.innocentWins || 0;
+
+    const totalWins = stats.impostorWins + stats.innocentWins;
+    const winRate = stats.gamesPlayed > 0 ? Math.round((totalWins / stats.gamesPlayed) * 100) : 0;
+
+    document.getElementById('localImpWins').textContent = stats.impostorWins;
+    document.getElementById('localInnWins').textContent = stats.innocentWins;
+    document.getElementById('localGames').textContent = stats.gamesPlayed;
+    document.getElementById('localWinRate').textContent = winRate + '%';
+
+    document.getElementById('localStatsModal').style.display = 'flex';
+}
+
+function updateLobbyLeaderboard() {
+    // Renderizar tabla en ambos lobbys (Host y Player)
+    const targets = ['roomStatsBodyHost', 'roomStatsBodyPlayer'];
+
+    // Ordenar: Victorias Impostor > Votos Correctos > Victorias Inocente > Partidas
+    const sortedStats = [...roomStats].sort((a, b) => {
+        if (b.stats.impostorWins !== a.stats.impostorWins) return b.stats.impostorWins - a.stats.impostorWins;
+        if (b.stats.correctVotes !== a.stats.correctVotes) return b.stats.correctVotes - a.stats.correctVotes;
+        if (b.stats.innocentWins !== a.stats.innocentWins) return b.stats.innocentWins - a.stats.innocentWins;
+        return b.stats.gamesPlayed - a.stats.gamesPlayed;
+    });
+
+    targets.forEach(id => {
+        const tbody = document.getElementById(id);
+        if (!tbody) return;
+
+        tbody.innerHTML = '';
+
+        if (sortedStats.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="waiting-text">Aún no hay datos</td></tr>';
+            return;
+        }
+
+        sortedStats.forEach(p => {
+            const row = document.createElement('tr');
+            // Resaltar al propio jugador
+            if (p.id === myPlayerId) row.style.fontWeight = 'bold';
+            if (p.id === myPlayerId) row.style.color = 'var(--accent)';
+
+            row.innerHTML = `
+                <td style="text-align: left; padding-left: 10px;">${escapeHtml(p.username || '???')}</td>
+                <td>${p.stats.gamesPlayed || 0}</td>
+                <td>${p.stats.correctVotes || 0}</td>
+                <td>${p.stats.impostorWins || 0}</td>
+                <td>${p.stats.innocentWins || 0}</td>
+            `;
+            tbody.appendChild(row);
+        });
+    });
+}
+
+function closeModal(id) {
+    document.getElementById(id).style.display = 'none';
+}
+
+// Close modals when clicking outside
+window.onclick = function (event) {
+    if (event.target.classList.contains('modal')) {
+        event.target.style.display = 'none';
+    }
+}
+
+// ============================================
+// CHAT FUNCTIONS
+// ============================================
+
+function toggleChat() {
+    const chat = document.getElementById('chatContainer');
+    const isHidden = chat.style.display === 'none';
+    chat.style.display = isHidden ? 'flex' : 'none';
+
+    // Auto focus input when opening
+    if (isHidden) {
+        setTimeout(() => document.getElementById('chatInput').focus(), 100);
+    }
+}
+
+function sendChat(e) {
+    e.preventDefault();
+    if (!currentRoom) return;
+
+    const input = document.getElementById('chatInput');
+    const message = input.value.trim();
+
+    if (!message) return;
+    if (message.length > 100) {
+        toast('El mensaje es muy largo (máx 100 caracteres)', 'error');
+        return;
+    }
+
+    socket.emit('sendChat', { roomCode: currentRoom, message });
+    input.value = '';
+    input.focus();
+}
+
+function appendChatMessage(msg) {
+    const chatContainer = document.getElementById('chatMessages');
+    const div = document.createElement('div');
+    const isMine = msg.senderId === myPlayerId;
+
+    div.className = `chat-message ${isMine ? 'mine' : 'others'} ${msg.isSpectator ? 'spectator' : ''}`;
+
+    const time = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    div.innerHTML = `
+        <div class="chat-msg-header">
+            <span class="chat-sender">${escapeHtml(msg.senderName)}</span>
+            <span class="chat-time">${time}</span>
+        </div>
+        <div class="chat-msg-bubble">${escapeHtml(msg.content)}</div>
+    `;
+
+    chatContainer.appendChild(div);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+
+    // If chat is closed and we receive a message, maybe show a badge? 
+    // For now, user didn't ask for notification badge, so ignore.
+}
+
+socket.on('chatMessage', (msg) => {
+    appendChatMessage(msg);
 });
 
 // ============================================
@@ -631,6 +924,7 @@ function setupEventListeners() {
         if (e.key === 'Enter') joinRoom();
     });
 }
+
 
 // Initialize app when DOM is ready
 document.addEventListener('DOMContentLoaded', initializeApp);

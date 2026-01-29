@@ -30,6 +30,7 @@ const rooms = new Map();
 
 // ========== REGISTRO DE MANEJADORES ==========
 registerSocketHandlers(io, rooms);
+require('./src/handlers/chat-handlers').registerChatHandlers(io, rooms);
 
 // ========== INICIAR SERVIDOR ==========
 server.listen(PORT, () => {

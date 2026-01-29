@@ -782,7 +782,8 @@ select {
 .live-players-panel {
     position: fixed;
     top: 80px;
-    right: 20px;
+    left: 20px;
+    /* Moved to left */
     width: 220px;
     background: var(--bg-1);
     border: 1px solid var(--border);
@@ -852,4 +853,521 @@ select {
     font-size: 11px;
     margin-left: 6px;
     opacity: 0.7;
+}
+
+/* ============================================
+   CHAT STYLES
+   ============================================ */
+
+.chat-container {
+    position: fixed;
+    top: 65px;
+    right: 0;
+    bottom: 0;
+    width: 320px;
+    background: var(--bg-1);
+    border-left: 1px solid var(--border);
+    display: flex;
+    /* Always flex, we toggle via transform or class */
+    flex-direction: column;
+    z-index: 1000;
+    /* High z-index to be safe */
+    transform: translateX(0);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: -4px 0 16px rgba(0, 0, 0, 0.2);
+}
+
+/* We will control visibility with a class .active or direct style display */
+/* Current logic uses style.display toggle. Let's make sure it handles flex properly */
+
+
+/* Removed complex attribute selector to avoid confusion */
+
+.chat-container {
+    position: fixed;
+    top: 65px;
+    right: 0;
+    bottom: 0;
+    width: 320px;
+    background: var(--bg-1);
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    z-index: 1000;
+    transform: translateX(0);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: -4px 0 16px rgba(0, 0, 0, 0.2);
+}
+
+.chat-container[style*="display: none"] {
+    display: none !important;
+}
+
+.chat-header {
+    padding: 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--bg-2);
+}
+
+.chat-header h3 {
+    margin: 0;
+    font-size: 0.9375rem;
+    color: var(--text-1);
+}
+
+.chat-toggle-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-2);
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+}
+
+.chat-toggle-btn:hover {
+    color: var(--text-1);
+    background: var(--bg-3);
+}
+
+.chat-toggle-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    scrollbar-width: thin;
+}
+
+.chat-system-msg {
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--text-3);
+    margin: 8px 0;
+    font-style: italic;
+}
+
+.chat-message {
+    display: flex;
+    flex-direction: column;
+    max-width: 85%;
+}
+
+.chat-message.others {
+    align-self: flex-start;
+}
+
+.chat-message.mine {
+    align-self: flex-end;
+    align-items: flex-end;
+}
+
+.chat-msg-header {
+    font-size: 0.6875rem;
+    color: var(--text-3);
+    margin-bottom: 2px;
+    display: flex;
+    gap: 6px;
+}
+
+.chat-message.mine .chat-msg-header {
+    flex-direction: row-reverse;
+}
+
+.chat-msg-bubble {
+    padding: 8px 12px;
+    border-radius: 12px;
+    font-size: 0.875rem;
+    line-height: 1.4;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.chat-message.others .chat-msg-bubble {
+    background: var(--bg-2);
+    color: var(--text-1);
+    border-top-left-radius: 2px;
+}
+
+.chat-message.mine .chat-msg-bubble {
+    background: var(--accent);
+    color: #fff;
+    border-top-right-radius: 2px;
+}
+
+.chat-message.spectator .chat-msg-bubble {
+    background: var(--bg-3);
+    border: 1px dashed var(--text-3);
+    opacity: 0.8;
+}
+
+#chatForm {
+    padding: 14px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 8px;
+    background: var(--bg-2);
+}
+
+#chatInput {
+    flex: 1;
+    padding: 10px;
+    font-size: 0.875rem;
+}
+
+.btn-chat-send {
+    background: var(--accent);
+    border: none;
+    border-radius: var(--radius);
+    color: white;
+    width: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-chat-send:hover {
+    background: var(--accent-hover);
+}
+
+.btn-chat-send svg {
+    width: 18px;
+    height: 18px;
+}
+
+@media (max-width: 768px) {
+    .app {
+        display: flex;
+        flex-direction: column;
+    }
+
+    header {
+        width: 100%;
+    }
+
+    .chat-container {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        z-index: 200;
+        border-left: none;
+        padding-top: 60px;
+        /* Space for header if we want, or just overlay */
+        transform: translateX(0);
+        height: 100%;
+    }
+
+    .chat-container[style*="display: none"] {
+        display: none !important;
+    }
+
+    .live-players-panel {
+        left: unset;
+        right: 10px;
+        width: 180px;
+        top: 70px;
+    }
+}
+
+/* =========================================
+   STATS & MODALS
+   ========================================= */
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background-color: var(--bg-1);
+    margin: auto;
+    width: 90%;
+    max-width: 500px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    animation: zoomIn 0.2s ease;
+}
+
+@keyframes zoomIn {
+    from {
+        transform: scale(0.9);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.modal-header {
+    padding: 16px 20px;
+    background: var(--bg-2);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.close-modal {
+    background: none;
+    border: none;
+    color: var(--text-2);
+    font-size: 24px;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.close-modal:hover {
+    color: var(--text-1);
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+/* Stats Table */
+.stats-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.stats-table th,
+.stats-table td {
+    padding: 10px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+}
+
+.stats-table th {
+    text-align: left;
+    color: var(--text-2);
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+}
+
+.stats-table th:not(:first-child) {
+    text-align: center;
+}
+
+.stats-table td:first-child {
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-1);
+}
+
+/* Local Stats Grid */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+}
+
+.stat-card {
+    background: var(--bg-2);
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+    border: 1px solid var(--border);
+}
+
+.stat-card.impostor {
+    border-color: var(--impostor-soft);
+    background: radial-gradient(circle at top right, var(--impostor-soft), transparent 60%);
+}
+
+.stat-card.innocent {
+    border-color: var(--success-soft);
+    background: radial-gradient(circle at top right, var(--success-soft), transparent 60%);
+}
+
+.stat-card.survivor {
+    border-color: var(--accent-soft);
+    background: radial-gradient(circle at top right, var(--accent-soft), transparent 60%);
+}
+
+.stat-icon {
+    font-size: 24px;
+    margin-bottom: 5px;
+}
+
+.stat-value {
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--text-1);
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: var(--text-2);
+}
+
+/* =========================================
+   LOBBY GRID LAYOUT
+   ========================================= */
+.lobby-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+}
+
+.main-column,
+.side-column {
+    width: 100%;
+}
+
+/* Desktop: Side-by-side layout */
+@media (min-width: 900px) {
+
+    /* Expand container when lobby-grid is inside */
+    .container:has(.lobby-grid) {
+        max-width: 800px;
+    }
+
+    .lobby-grid {
+        display: grid;
+        grid-template-columns: 1fr 280px;
+        gap: 20px;
+        align-items: start;
+    }
+
+    .side-column .card.full-height {
+        position: sticky;
+        top: 20px;
+        max-height: calc(100vh - 100px);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .side-column .leaderboard-container {
+        flex: 1;
+        overflow-y: auto;
+    }
+}
+
+/* Leaderboard Styles */
+.leaderboard-container {
+    max-height: 250px;
+    overflow-y: auto;
+    margin-top: 10px;
+}
+
+.small-table th,
+.small-table td {
+    padding: 8px 6px;
+    font-size: 0.85rem;
+}
+
+.small-table th {
+    font-size: 1rem;
+}
+
+.waiting-text {
+    color: var(--text-3);
+    font-style: italic;
+    padding: 15px !important;
+}
+
+/* Custom Scrollbar for leaderboard */
+.leaderboard-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.leaderboard-container::-webkit-scrollbar-track {
+    background: var(--bg-1);
+}
+
+.leaderboard-container::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 3px;
+}
+
+/* Voting Screen Layout Improvements */
+#votingButtons {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-top: 15px;
+}
+
+#votingButtons .btn {
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Description order display - horizontal wrapping */
+#descriptionOrderDisplay {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+}
+
+#descriptionOrderDisplay span {
+    background: var(--bg-2);
+    padding: 4px 10px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+}
+
+#descriptionOrderDisplay span.current {
+    background: var(--accent);
+    color: white;
+}
+
+#descriptionOrderDisplay span.done {
+    opacity: 0.5;
+    text-decoration: line-through;
+}
+
+/* Make voting screen more compact */
+#votingScreen .card {
+    margin-bottom: 10px;
+}
+
+#votingScreen h2 {
+    margin-bottom: 10px;
+}
+
+/* Responsive: single column on very small screens */
+@media (max-width: 400px) {
+    #votingButtons {
+        grid-template-columns: 1fr;
+    }
 }

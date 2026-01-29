@@ -16,6 +16,16 @@
     <div class="app">
         <header>
             <div class="logo">El Impostor</div>
+            <button id="myStatsBtn" class="theme-btn" onclick="showLocalStats()" title="Mis Estadísticas"
+                style="margin-right: 10px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M16 4h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                    <rect x="2" y="6" width="12" height="12" rx="2"></rect>
+                    <circle cx="8" cy="12" r="2"></circle>
+                    <path d="M16 8v12"></path>
+                </svg>
+            </button>
             <button class="theme-btn" onclick="toggleTheme()" title="Cambiar tema">
                 <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
@@ -26,6 +36,13 @@
                     viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+            </button>
+            <button id="chatToggleBtn" class="theme-btn" onclick="toggleChat()" title="Abrir Chat"
+                style="display: none; margin-left: 10px;">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                 </svg>
             </button>
         </header>
@@ -70,60 +87,116 @@
 
                 <!-- LOBBY - HOST SCREEN -->
                 <div id="lobbyHostScreen" class="screen">
-                    <div class="room-code-box" onclick="copyRoomCode()">
-                        <div class="room-code-label">Codigo de sala</div>
-                        <div class="room-code" id="roomCodeDisplay"></div>
-                        <div class="room-code-hint">Toca para copiar</div>
-                    </div>
-                    <div class="card">
-                        <div class="card-head">
-                            <h3>Jugadores</h3>
-                            <span class="count"><span id="playerCount">1</span>/12</span>
-                        </div>
-                        <div class="player-list" id="playerListHost"></div>
-                    </div>
-                    <div class="card">
-                        <h3>Configuracion</h3>
-                        <div class="config-row">
-                            <div class="input-group" style="margin-bottom:0">
-                                <label>Categoria</label>
-                                <select id="categorySelect" onchange="updateConfig()"></select>
+                    <div class="lobby-grid">
+                        <div class="main-column">
+                            <div class="room-code-box" onclick="copyRoomCode()">
+                                <div class="room-code-label">Codigo de sala</div>
+                                <div class="room-code" id="roomCodeDisplay"></div>
+                                <div class="room-code-hint">Toca para copiar</div>
                             </div>
-                            <div class="input-group" style="margin-bottom:0">
-                                <label>Impostores</label>
-                                <select id="impostorCountSelect" onchange="updateConfig()">
-                                    <option value="1">1</option>
-                                    <option value="2">2</option>
-                                    <option value="3">3</option>
-                                    <option value="4">4</option>
-                                    <option value="5">5</option>
-                                    <option value="6">6</option>
-                                </select>
+                            <div class="card">
+                                <div class="card-head">
+                                    <h3>Jugadores</h3>
+                                    <span class="count"><span id="playerCount">1</span>/8</span>
+                                </div>
+                                <div class="player-list" id="playerListHost"></div>
+                            </div>
+                            <div class="card">
+                                <h3>Configuracion</h3>
+                                <div class="config-row">
+                                    <div class="input-group" style="margin-bottom:0">
+                                        <label>Categoria</label>
+                                        <select id="categorySelect" onchange="updateConfig()"></select>
+                                    </div>
+                                    <div class="input-group" style="margin-bottom:0">
+                                        <label>Impostores</label>
+                                        <select id="impostorCountSelect" onchange="updateConfig()">
+                                            <option value="1">1</option>
+                                            <option value="2">2</option>
+                                            <option value="3">3</option>
+                                            <option value="4">4</option>
+                                            <option value="5">5</option>
+                                            <option value="6">6</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <button class="btn random-btn" onclick="randomCategory()">Categoria aleatoria</button>
+                            </div>
+                            <button class="btn btn-primary" id="startButton" onclick="startGame()" disabled>Iniciar
+                                partida</button>
+                            <p class="hint">Minimo 4 jugadores</p>
+                        </div>
+
+                        <div class="side-column">
+                            <div class="card full-height">
+                                <h3>🏆 Ranking de Sala</h3>
+                                <div class="leaderboard-container">
+                                    <table class="stats-table small-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Jugador</th>
+                                                <th title="Partidas Jugadas">🎮</th>
+                                                <th title="Votos Correctos">🎯</th>
+                                                <th title="Victorias como Impostor">😈</th>
+                                                <th title="Victorias como Inocente">😇</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="roomStatsBodyHost">
+                                            <tr>
+                                                <td colspan="5" class="waiting-text">Esperando datos...</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
-                        <button class="btn random-btn" onclick="randomCategory()">Categoria aleatoria</button>
                     </div>
-                    <button class="btn btn-primary" id="startButton" onclick="startGame()" disabled>Iniciar
-                        partida</button>
-                    <p class="hint">Minimo 4 jugadores</p>
                 </div>
 
                 <!-- LOBBY - PLAYER SCREEN -->
                 <div id="lobbyPlayerScreen" class="screen">
-                    <div class="room-code-box" onclick="copyRoomCode()">
-                        <div class="room-code-label">Codigo de sala</div>
-                        <div class="room-code" id="roomCodePlayer"></div>
-                        <div class="room-code-hint">Toca para copiar</div>
-                    </div>
-                    <div class="card">
-                        <div class="card-head">
-                            <h3>Jugadores</h3>
-                            <span class="count"><span id="playerCountPlayer">1</span>/12</span>
+                    <div class="lobby-grid">
+                        <div class="main-column">
+                            <div class="room-code-box" onclick="copyRoomCode()">
+                                <div class="room-code-label">Codigo de sala</div>
+                                <div class="room-code" id="roomCodePlayer"></div>
+                                <div class="room-code-hint">Toca para copiar</div>
+                            </div>
+                            <div class="card">
+                                <div class="card-head">
+                                    <h3>Jugadores</h3>
+                                    <span class="count"><span id="playerCountPlayer">1</span>/8</span>
+                                </div>
+                                <div class="player-list" id="playerListPlayer"></div>
+                            </div>
+                            <div class="card">
+                                <p class="waiting">Esperando al host...</p>
+                            </div>
                         </div>
-                        <div class="player-list" id="playerListPlayer"></div>
-                    </div>
-                    <div class="card">
-                        <p class="waiting">Esperando al host...</p>
+
+                        <div class="side-column">
+                            <div class="card full-height">
+                                <h3>🏆 Ranking de Sala</h3>
+                                <div class="leaderboard-container">
+                                    <table class="stats-table small-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Jugador</th>
+                                                <th title="Partidas Jugadas">🎮</th>
+                                                <th title="Votos Correctos">🎯</th>
+                                                <th title="Victorias como Impostor">😈</th>
+                                                <th title="Victorias como Inocente">😇</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="roomStatsBodyPlayer">
+                                            <tr>
+                                                <td colspan="5" class="waiting-text">Esperando datos...</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -187,8 +260,8 @@
                         <div class="votes-log" id="votesDisplay"></div>
                     </div>
                     <div id="votingButtons"></div>
-                    <button class="btn btn-primary" id="finishVotingBtn" onclick="finishVoting()"
-                        style="display: none; margin-top: 20px;">Terminar Votación</button>
+                    <!-- <button class="btn btn-primary" id="finishVotingBtn" onclick="finishVoting()"
+                        style="display: none; margin-top: 20px;">Terminar Votación</button> -->
                 </div>
 
                 <!-- ELIMINATION SCREEN -->
@@ -215,10 +288,6 @@
                         <p class="role-hint" id="roleHintGame"></p>
                     </div>
                     <div class="round-badge">Ronda <strong id="roundNumber">1</strong></div>
-                    <div class="card">
-                        <h3>Jugadores vivos</h3>
-                        <div class="player-list" id="alivePlayersList"></div>
-                    </div>
                     <button class="btn btn-primary" id="startVotingBtn" onclick="startVoting()"
                         style="display:none">Iniciar votacion</button>
                     <p id="waitingVoteMessage" class="waiting">Esperando al host...</p>
@@ -249,9 +318,76 @@
 
             </div>
         </main>
+
+        <!-- Panel Global de Jugadores en Vivo (persistente durante el juego) -->
+        <div id="globalLivePlayersPanel" class="live-players-panel" style="display: none;">
+            <div class="live-players-header">Jugadores en Vivo</div>
+            <div id="globalLivePlayersList" class="live-players-list"></div>
+        </div>
+
+        <aside id="chatContainer" class="chat-container" style="display: none;">
+            <div class="chat-header">
+                <h3>Chat de Sala</h3>
+                <button class="chat-toggle-btn" onclick="toggleChat()">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div id="chatMessages" class="chat-messages">
+                <!-- Messages will appear here -->
+                <div class="chat-system-msg">Bienvenido al chat!</div>
+            </div>
+            <form id="chatForm" onsubmit="sendChat(event)">
+                <input type="text" id="chatInput" placeholder="Escribe un mensaje..." maxlength="100"
+                    autocomplete="off">
+                <button type="submit" class="btn-chat-send">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                    </svg>
+                </button>
+            </form>
+        </aside>
     </div>
 
     <div id="toastContainer"></div>
+
+    <!-- Local Stats Modal -->
+    <div id="localStatsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📊 Mis Estadísticas</h2>
+                <button class="close-modal" onclick="closeModal('localStatsModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="stats-grid">
+                    <div class="stat-card impostor">
+                        <div class="stat-icon">😈</div>
+                        <div class="stat-value" id="localImpWins">0</div>
+                        <div class="stat-label">Victorias Impostor</div>
+                    </div>
+                    <div class="stat-card survivor">
+                        <div class="stat-icon">🎮</div>
+                        <div class="stat-value" id="localGames">0</div>
+                        <div class="stat-label">Partidas Jugadas</div>
+                    </div>
+                    <div class="stat-card innocent">
+                        <div class="stat-icon">😇</div>
+                        <div class="stat-value" id="localInnWins">0</div>
+                        <div class="stat-label">Victorias Inocente</div>
+                    </div>
+                    <div class="stat-card winrate">
+                        <div class="stat-icon">📈</div>
+                        <div class="stat-value" id="localWinRate">0%</div>
+                        <div class="stat-label">Win Rate</div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="script.js"></script>
 </body>

@@ -1,6 +1,6 @@
 {
     "name": "el-impostor",
-    "version": "2.0.0",
+    "version": "2.1.0",
     "description": "Juego multijugador de deduccion social",
     "main": "server.js",
     "scripts": {

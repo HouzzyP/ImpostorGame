@@ -8,7 +8,7 @@
 [![Socket.IO](https://img.shields.io/badge/Socket.IO-4.6-010101?logo=socket.io&logoColor=white)](https://socket.io/)
 [![Express](https://img.shields.io/badge/Express-4.18-000000?logo=express&logoColor=white)](https://expressjs.com/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-2.0.0-brightgreen.svg)](package.json)
+[![Version](https://img.shields.io/badge/version-2.1.0-brightgreen.svg)](package.json)
 
 [📖 Documentación](docs/INDICE.md)
 
@@ -31,8 +31,11 @@
 | 👥 **Panel en Vivo** | Seguimiento visual del estado de cada jugador (vivo, votado, eliminado) |
 | 🎨 **Tema Claro/Oscuro** | Interfaz moderna con cambio de tema |
 | 😄 **Reacciones en Vivo** | Sistema de emojis para interactuar durante la votación |
-| 📊 **Estadísticas Finales** | Revelación de roles y resultados al finalizar |
-| 🔁 **Continuar en Sala** | Juega múltiples rondas sin salir de la sala |
+| 📊 **Estadísticas Avanzadas** | Win Rate automático, Partidas Jugadas, Votos Correctos y Victorias por rol |
+| 👥 **Panel Global** | Seguimiento persistente de jugadores vivos sin parpadeos entre rondas |
+| 🎨 **UI Optimizada** | Lobby "side-by-side", Votación en grilla y badges para gestión de turnos |
+| 😄 **Reacciones en Vivo** | Sistema de emojis para interactuar durante la votación |
+| 🔄 **Continuidad** | Incremento de rondas en empates y gestión de re-conexión básica |
 | 👻 **Modo Espectador** | Observa partidas en curso sin participar |
 
 ---
@@ -242,7 +245,7 @@ Los tests incluyen:
 
 ## 📝 Roadmap
 
-- [ ] Sistema de puntuación persistente
+- [x] Sistema de puntuación persistente (Local Stats + Win Rate)
 - [ ] Chat en vivo durante discusión
 - [ ] Salas privadas con contraseña
 - [ ] Personalización de avatares
@@ -275,7 +278,7 @@ Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) par
 
 **⭐ Si te gusta el proyecto, dale una estrella en GitHub ⭐**
 
-**Última actualización**: Enero 2026 | **Versión**: 2.0.0 | **Estado**: ✅ Producción
+**Última actualización**: Enero 2026 | **Versión**: 2.1.0 | **Estado**: ✅ Producción
 
 [⬆ Volver arriba](#-el-impostor)
 

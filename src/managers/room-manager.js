@@ -17,7 +17,8 @@ function createRoom(roomCode, player) {
                 role: null,
                 alive: true,
                 category: null,
-                word: null
+                word: null,
+                stats: { impostorWins: 0, innocentWins: 0, gamesPlayed: 0, correctVotes: 0 }
             }
         ],
         config: {
@@ -35,7 +36,8 @@ function createRoom(roomCode, player) {
         votes: [],
         discussionEndTime: null,
         votingEndTime: null,
-        gameWinner: null
+        gameWinner: null,
+        spectators: [] // Lista de espectadores
     };
 }
 
@@ -57,10 +59,75 @@ function addPlayerToRoom(room, player) {
         role: null,
         alive: true,
         category: null,
-        word: null
+        word: null,
+        stats: { impostorWins: 0, innocentWins: 0, gamesPlayed: 0, correctVotes: 0 }
     });
 
     return true;
+}
+
+/**
+ * Actualiza las estadísticas de los jugadores
+ * @param {Object} room - Sala actual
+ * @param {Object} updates - Objeto con actualizaciones { winner, gameEnded, correctVoters: [id] }
+ */
+function updateRoomStats(room, updates) {
+    room.players.forEach(p => {
+        // Actualizar victorias al finalizar partida
+        if (updates.winner) {
+            if (updates.winner === 'impostors' && p.role === 'impostor') {
+                p.stats.impostorWins++;
+            } else if (updates.winner === 'innocents' && p.role !== 'impostor') {
+                p.stats.innocentWins++;
+            }
+        }
+
+        // Contar partidas jugadas
+        if (updates.gameEnded) {
+            p.stats.gamesPlayed++;
+        }
+
+        // Contar votos correctos (votó por un impostor que fue eliminado)
+        if (updates.correctVoters && updates.correctVoters.includes(p.id)) {
+            p.stats.correctVotes++;
+        }
+    });
+}
+
+/**
+ * Agrega un espectador a la sala
+ * @param {Object} room - Objeto de la sala
+ * @param {Object} player - Objeto del espectador
+ */
+function addSpectator(room, player) {
+    // Evitar duplicados
+    if (!room.spectators.find(s => s.id === player.id)) {
+        room.spectators.push({
+            id: player.id,
+            username: player.username,
+            isSpectator: true
+        });
+    }
+}
+
+/**
+ * Promueve espectadores a jugadores si hay espacio
+ * @param {Object} room - Objeto de la sala
+ */
+function promoteSpectators(room) {
+    if (room.spectators.length === 0) return;
+
+    // Intentar mover cada espectador a la lista de jugadores
+    // Usamos un bucle inverso para poder eliminar elementos seguros
+    for (let i = room.spectators.length - 1; i >= 0; i--) {
+        const spectator = room.spectators[i];
+
+        // Verificar espacio
+        if (room.players.length < room.config.maxPlayers) {
+            addPlayerToRoom(room, { id: spectator.id, username: spectator.username });
+            room.spectators.splice(i, 1); // Remover de espectadores
+        }
+    }
 }
 
 /**
@@ -74,6 +141,13 @@ function removePlayerFromRoom(room, playerId) {
     if (index > -1) {
         return room.players.splice(index, 1)[0];
     }
+
+    // También buscar en espectadores
+    const specIndex = room.spectators.findIndex(s => s.id === playerId);
+    if (specIndex > -1) {
+        return room.spectators.splice(specIndex, 1)[0];
+    }
+
     return null;
 }
 
@@ -84,7 +158,10 @@ function removePlayerFromRoom(room, playerId) {
  * @returns {Object|null} Objeto del jugador o null
  */
 function getPlayerFromRoom(room, playerId) {
-    return room.players.find(p => p.id === playerId) || null;
+    const player = room.players.find(p => p.id === playerId);
+    if (player) return player;
+
+    return room.spectators.find(s => s.id === playerId) || null;
 }
 
 /**
@@ -101,6 +178,9 @@ function getRoomHost(room) {
  * @param {Object} room - Objeto de la sala
  */
 function resetRoomForNewRound(room) {
+    // Primero, promover espectadores que estaban esperando
+    promoteSpectators(room);
+
     room.players.forEach(player => {
         player.role = null;
         player.alive = true;
@@ -130,7 +210,12 @@ function getRoomPublicInfo(room) {
             id: p.id,
             username: p.username,
             isHost: p.isHost,
-            alive: p.alive
+            alive: p.alive,
+            stats: p.stats
+        })),
+        spectators: room.spectators.map(s => ({
+            id: s.id,
+            username: s.username
         })),
         gameState: room.gameState,
         currentRound: room.currentRound,
@@ -141,9 +226,12 @@ function getRoomPublicInfo(room) {
 module.exports = {
     createRoom,
     addPlayerToRoom,
+    addSpectator,
+    promoteSpectators,
     removePlayerFromRoom,
     getPlayerFromRoom,
     getRoomHost,
     resetRoomForNewRound,
-    getRoomPublicInfo
+    getRoomPublicInfo,
+    updateRoomStats
 };
