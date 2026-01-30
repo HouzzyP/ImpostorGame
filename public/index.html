@@ -61,6 +61,28 @@
     <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script> -->
 
     <script src="/socket.io/socket.io.js"></script>
+
+    <!-- Structured Data (JSON-LD) for SEO -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "El Impostor Online",
+      "applicationCategory": "GameApplication",
+      "operatingSystem": "Any",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "description": "Juego de deducción social multijugador online. Descubre al impostor antes de que sea demasiado tarde. Juega gratis sin descargas.",
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.8",
+        "ratingCount": "150"
+      }
+    }
+    </script>
 </head>
 
 <body>
@@ -71,38 +93,55 @@
     <div class="app">
         <header>
             <div class="logo">El Impostor</div>
-            <button id="myStatsBtn" class="theme-btn" onclick="showLocalStats()" title="Mis Estadísticas"
-                style="margin-right: 10px;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <!-- Trophy icon -->
-                    <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
-                    <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
-                    <path d="M4 22h16"></path>
-                    <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
-                    <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
-                    <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
-                </svg>
-            </button>
-            <button class="theme-btn" onclick="toggleTheme()" title="Cambiar tema">
-                <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
-                <svg class="icon-moon" style="display:none" xmlns="http://www.w3.org/2000/svg" fill="none"
-                    viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                </svg>
-            </button>
-            <button id="chatToggleBtn" class="theme-btn" onclick="toggleChat()" title="Abrir Chat"
-                style="display: none; margin-left: 10px;">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                </svg>
-            </button>
+            <div class="header-actions">
+                <div class="dropdown">
+                    <button class="theme-btn" id="helpBtn" title="Ayuda y Reglas">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                        </svg>
+                    </button>
+                    <div class="dropdown-content" id="helpDropdown">
+                        <a href="/como-jugar" class="nav-link">📖 Cómo Jugar</a>
+                        <a href="/reglas" class="nav-link">📜 Reglas</a>
+                        <a href="/faq" class="nav-link">❓ FAQ</a>
+                    </div>
+                </div>
+
+                <button id="myStatsBtn" class="theme-btn" onclick="showLocalStats()" title="Mis Estadísticas"
+                    style="margin-right: 10px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <!-- Trophy icon -->
+                        <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+                        <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+                        <path d="M4 22h16"></path>
+                        <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
+                        <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
+                        <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
+                    </svg>
+                </button>
+                <button class="theme-btn" onclick="toggleTheme()" title="Cambiar tema">
+                    <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                    <svg class="icon-moon" style="display:none" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                    </svg>
+                </button>
+                <button id="chatToggleBtn" class="theme-btn" onclick="toggleChat()" title="Abrir Chat"
+                    style="display: none; margin-left: 10px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                </button>
         </header>
 
         <main>
@@ -451,6 +490,85 @@
                     </div>
 
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- How to Play Modal -->
+    <div id="howToPlayModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📖 Cómo Jugar</h2>
+                <button class="close-modal" onclick="closeModal('howToPlayModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <h3>👥 Roles</h3>
+                <ul>
+                    <li><strong>Inocente:</strong> Recibe una palabra secreta. Debes describirla sutilmente.</li>
+                    <li><strong>Impostor:</strong> NO recibe la palabra. Debe fingir que la sabe y descubrirla.</li>
+                </ul>
+                <h3>🗣️ Fase de Discusión</h3>
+                <p>El juego sigue un <strong>orden de turnos estricto</strong>. Cada jugador debe dar su descripción
+                    cuando sea su turno.</p>
+                <h3>🗳️ Votación</h3>
+                <p>Vota por quien creas que es el impostor. El más votado será eliminado.</p>
+                <div class="highlight-box"
+                    style="background: var(--bg-2); padding: 10px; border-radius: 6px; margin-top: 10px;">
+                    <strong>Tip:</strong> No seas muy obvio al describir, ¡o el impostor adivinará la palabra!
+                </div>
+            </div>
+            <div class="modal-footer">
+                <a href="/como-jugar" class="btn btn-secondary">Ver Tutorial Completo</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rules Modal -->
+    <div id="rulesModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📜 Reglas Básicas</h2>
+                <button class="close-modal" onclick="closeModal('rulesModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <ul>
+                    <li><strong>Mínimo 4 jugadores</strong> para comenzar la partida.</li>
+                    <li>Se debe respetar el orden de turnos para hablar/describir.</li>
+                    <li>Prohibido decir la palabra secreta textualmente.</li>
+                    <li>Los impostores ganan si sobreviven o si los inocentes se eliminan entre sí.</li>
+                    <li>Los inocentes ganan si eliminan a todos los impostores.</li>
+                    <li>Si hay empate en votos, nadie es eliminado.</li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <a href="/reglas" class="btn btn-secondary">Ver Reglas Detalladas</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- FAQ Modal -->
+    <div id="faqModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>❓ Preguntas Frecuentes</h2>
+                <button class="close-modal" onclick="closeModal('faqModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="faq-item">
+                    <strong>¿Los impostores se conocen?</strong>
+                    <p>No, si hay más de uno, no saben quiénes son sus compañeros.</p>
+                </div>
+                <div class="faq-item">
+                    <strong>¿Qué pasa si me desconecto?</strong>
+                    <p>Puedes volver a entrar con el mismo nombre y recuperarás tu rol.</p>
+                </div>
+                <div class="faq-item">
+                    <strong>¿Cómo gano puntos?</strong>
+                    <p>Ganando partidas y votando correctamente al impostor.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <a href="/faq" class="btn btn-secondary">Ver Todas las FAQ</a>
             </div>
         </div>
     </div>

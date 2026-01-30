@@ -108,6 +108,49 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('roomCodeInput')?.addEventListener('keypress', e => {
         if (e.key === 'Enter') window.joinRoom();
     });
+
+    // Help Dropdown Logic
+    const helpBtn = document.getElementById('helpBtn');
+    const dropdown = document.getElementById('helpDropdown');
+
+    if (helpBtn && dropdown) {
+        helpBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            dropdown.classList.toggle('show');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!dropdown.contains(e.target) && !helpBtn.contains(e.target)) {
+                dropdown.classList.remove('show');
+            }
+        });
+    }
+
+    // Setup Navigation Modals (Hybrid SEO)
+    const links = {
+        '/como-jugar': 'howToPlayModal',
+        '/reglas': 'rulesModal',
+        '/faq': 'faqModal'
+    };
+
+    document.querySelectorAll('.nav-link').forEach(link => {
+        const path = link.getAttribute('href');
+        if (links[path]) {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                // Close dropdown if open
+                if (dropdown) dropdown.classList.remove('show');
+
+                const modalId = links[path];
+                const modal = document.getElementById(modalId);
+                if (modal) {
+                    // Close other modals first
+                    document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
+                    modal.style.display = 'flex';
+                }
+            });
+        }
+    });
 });
 
 // PWA Logic copied from script.js

@@ -8,6 +8,7 @@
 const express = require('express');
 const http = require('http');
 const socketIO = require('socket.io');
+const path = require('path');
 
 const helmet = require('helmet');
 const cors = require('cors');
@@ -52,6 +53,17 @@ const io = socketIO(server, config.SOCKET_IO);
 
 // Servir archivos estáticos
 app.use(express.static('public'));
+
+// Rutas SEO
+app.get('/como-jugar', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'como-jugar.html'));
+});
+app.get('/reglas', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'reglas.html'));
+});
+app.get('/faq', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'faq.html'));
+});
 
 // ========== ALMACENAMIENTO DE DATOS ==========
 const rooms = new Map();
