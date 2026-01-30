@@ -1,3 +1,4 @@
 User-agent: *
 Allow: /
-Sitemap: https://elimpostor.com/sitemap.xml
+
+Sitemap: https://elimpostormp.com/sitemap.xml
