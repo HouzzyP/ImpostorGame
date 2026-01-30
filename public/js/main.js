@@ -20,16 +20,33 @@ window.showHomeScreen = UI.showHomeScreen;
 window.showJoinScreen = UI.showJoinScreen;
 
 // Room Management
+// Helper for username validation
+function validateUsername(name) {
+    if (!name) return 'Ingresa tu nombre';
+    if (name.length < 2) return 'El nombre debe tener al menos 2 caracteres';
+    if (name.length > 15) return 'El nombre no puede tener más de 15 caracteres';
+    if (!/[a-zA-Z]/.test(name)) return 'El nombre debe tener al menos una letra';
+    if (!/^[a-zA-Z0-9 ]+$/.test(name)) return 'El nombre solo puede tener letras, números y espacios';
+    return null;
+}
+
 window.createRoom = () => {
     const name = document.getElementById('playerNameInput').value.trim();
-    if (!name) return toast('Ingresa tu nombre', 'error');
+    const error = validateUsername(name);
+    if (error) return toast(error, 'error');
     game.createRoom(name);
 };
 
 window.joinRoom = () => {
     const name = document.getElementById('joinNameInput').value.trim();
     const code = document.getElementById('roomCodeInput').value.trim().toUpperCase();
-    if (!name || !code) return toast('Completa todos los campos', 'error');
+
+    const nameError = validateUsername(name);
+    if (nameError) return toast(nameError, 'error');
+
+    if (!code) return toast('Ingresa el código de sala', 'error');
+    if (code.length !== 4) return toast('El código de sala debe tener 4 caracteres', 'error');
+
     game.joinRoom(name, code);
 };
 
@@ -52,6 +69,7 @@ window.randomCategory = () => {
 
 // Game Actions
 window.startGame = () => game.startGame();
+window.cancelGame = () => game.cancelGame();
 window.startVoting = () => game.startVoting();
 window.finishVoting = () => game.finishVoting();
 window.continueInRoom = () => game.continueInRoom();

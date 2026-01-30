@@ -198,13 +198,13 @@ function registerSocketHandlers(io, rooms) {
                 if (categoryKey === 'random') {
                     categoryKey = getRandomCategory(categoryNames);
                 }
-                const word = getRandomWord(categoryKey, wordDatabase);
+                const word = getRandomWord(wordDatabase[categoryKey]);
                 room.category = categoryKey;
                 room.word = word;
 
                 // Asignar roles e impostores
                 room.players = assignRoles(room.players, room.config.impostorCount);
-                room.players = assignWordAndCategory(room.players, word, categoryNames[categoryKey]);
+                room.players = assignWordAndCategory(room.players, categoryNames[categoryKey], word);
 
                 // Generar orden aleatorio
                 room.descriptionOrder = [...room.players].sort(() => Math.random() - 0.5);
@@ -314,6 +314,25 @@ function registerSocketHandlers(io, rooms) {
             const player = getPlayerFromRoom(room, socket.id);
             if (player && player.isHost) {
                 finishVotingProcess(room, io, data.roomCode);
+            }
+        });
+
+        // ========== CANCELAR PARTIDA (VOLVER A LOBBY) ==========
+        socket.on('cancelGame', (data) => {
+            if (!data || !data.roomCode) return;
+            const room = rooms.get(data.roomCode);
+            if (!room) return;
+
+            const player = getPlayerFromRoom(room, socket.id);
+            if (player && player.isHost && room.gameState !== 'waiting') {
+                console.log(`[${new Date().toLocaleTimeString()}] Host canceló la partida en sala ${data.roomCode}`);
+                resetRoomForNewRound(room);
+                io.to(data.roomCode).emit('gameCancelled', {
+                    message: 'El anfitrión canceló la partida',
+                    room: getRoomPublicInfo(room),
+                    categories: categoryNames
+                });
+                io.to(data.roomCode).emit('playerListUpdate', room.players);
             }
         });
 
@@ -437,7 +456,11 @@ function finishVotingProcess(room, io, roomCode) {
                     roundNumber: room.currentRound
                 });
             } else {
-                updateRoomStats(room, { winner: winCondition.winner, gameEnded: true });
+                updateRoomStats(room, {
+                    winner: winCondition.winner,
+                    gameEnded: true,
+                    correctVoters: voteResult.correctVoters || []
+                });
                 io.to(roomCode).emit('statsUpdate', room.players.map(p => ({ id: p.id, username: p.username, stats: p.stats })));
             }
         }

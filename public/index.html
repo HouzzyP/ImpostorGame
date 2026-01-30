@@ -252,8 +252,12 @@
                         <p class="role-hint" id="roleHint"></p>
                         <p class="category-tag" id="categoryTag"></p>
                     </div>
-                    <button class="btn btn-primary" id="readyButton" onclick="startVoting()"
-                        style="display:none">Iniciar votacion</button>
+                    <div class="role-actions">
+                        <button class="btn btn-primary" id="readyButton" onclick="startVoting()"
+                            style="display:none">Iniciar votacion</button>
+                        <button class="btn btn-danger btn-sm" id="cancelGameRoleBtn" onclick="cancelGame()"
+                            style="display:none" title="Volver al lobby">⬅ Cancelar partida</button>
+                    </div>
                     <p id="waitingMessage" class="waiting">Esperando al host...</p>
                 </div>
 
@@ -331,8 +335,12 @@
                         <p class="role-hint" id="roleHintGame"></p>
                     </div>
                     <div class="round-badge">Ronda <strong id="roundNumber">1</strong></div>
-                    <button class="btn btn-primary" id="startVotingBtn" onclick="startVoting()"
-                        style="display:none">Iniciar votacion</button>
+                    <div class="game-actions">
+                        <button class="btn btn-primary" id="startVotingBtn" onclick="startVoting()"
+                            style="display:none">Iniciar votacion</button>
+                        <button class="btn btn-danger btn-sm" id="cancelGameBtn" onclick="cancelGame()"
+                            style="display:none" title="Volver al lobby">⬅ Cancelar partida</button>
+                    </div>
                     <p id="waitingVoteMessage" class="waiting">Esperando al host...</p>
                 </div>
 

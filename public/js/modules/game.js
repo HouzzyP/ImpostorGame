@@ -75,6 +75,10 @@ class GameState {
         this.socket.emit('startGame', { roomCode: this.currentRoom });
     }
 
+    cancelGame() {
+        this.socket.emit('cancelGame', { roomCode: this.currentRoom });
+    }
+
     startVoting() {
         this.socket.emit('startVoting', { roomCode: this.currentRoom });
     }
@@ -117,9 +121,11 @@ class GameState {
                 this.resetVotesInPanel();
 
                 const startBtn = document.getElementById('startVotingBtn');
+                const cancelBtn = document.getElementById('cancelGameBtn');
                 const waitMsg = document.getElementById('waitingVoteMessage');
 
                 if (startBtn) startBtn.style.display = this.isHost ? 'block' : 'none';
+                if (cancelBtn) cancelBtn.style.display = this.isHost ? 'inline-block' : 'none';
                 if (waitMsg) waitMsg.style.display = this.isHost ? 'none' : 'block';
 
                 UI.showScreen('gameScreen');
@@ -143,12 +149,15 @@ class GameState {
                 }
 
                 document.getElementById('revealedWord').textContent = word || '';
-                document.getElementById('finalPlayerList').innerHTML = (players || []).map(p => `
-                    <div class="reveal-item ${p.isImpostor ? 'impostor' : ''}">
-                        <span class="player-name">${UI.escapeHtml(p.name)}</span>
-                        <span class="reveal-role">${p.isImpostor ? 'Impostor' : 'Inocente'}</span>
+                document.getElementById('finalPlayerList').innerHTML = (players || []).map(p => {
+                    const isImpostor = p.role === 'impostor' || p.isImpostor;
+                    const playerName = p.username || p.name || 'Jugador';
+                    return `
+                    <div class="reveal-item ${isImpostor ? 'impostor' : ''}">
+                        <span class="player-name">${UI.escapeHtml(playerName)}</span>
+                        <span class="reveal-role">${isImpostor ? 'Impostor' : 'Inocente'}</span>
                     </div>
-                `).join('');
+                `}).join('');
 
                 const contBtn = document.getElementById('continueButton'); // Volver a jugar (mismo room)
                 const resetBtn = document.getElementById('resetButton'); // Volver a lobby?

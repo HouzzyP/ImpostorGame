@@ -124,8 +124,10 @@ export function setupSocketListeners(socket) {
         UI.updateRoleDisplay('', isImpostor, word, category);
 
         const readyBtn = document.getElementById('readyButton');
+        const cancelRoleBtn = document.getElementById('cancelGameRoleBtn');
         const waitMsg = document.getElementById('waitingMessage');
         if (readyBtn) readyBtn.style.display = game.isHost ? 'block' : 'none';
+        if (cancelRoleBtn) cancelRoleBtn.style.display = game.isHost ? 'inline-block' : 'none';
         if (waitMsg) waitMsg.style.display = game.isHost ? 'none' : 'block';
 
         if (players) {
@@ -238,6 +240,23 @@ export function setupSocketListeners(socket) {
         }
     });
 
+    socket.on('gameCancelled', ({ message, categories: cats }) => {
+        game.clearLivePlayers();
+        game.categories = cats;
+        UI.updateCategorySelect(cats);
+        game.pendingNextState = null;
+        game.inEliminationScreen = false;
+        if (votingTimerInterval) clearInterval(votingTimerInterval);
+
+        toast(message, 'info');
+
+        if (game.isHost) {
+            UI.showScreen('lobbyHostScreen');
+        } else {
+            UI.showScreen('lobbyPlayerScreen');
+        }
+    });
+
     socket.on('gameInterrupted', ({ message, categories: cats }) => {
         game.clearLivePlayers();
         game.categories = cats;
@@ -318,6 +337,8 @@ function setupSpectatorGameView(statusText) {
     UI.showScreen('gameScreen');
     document.getElementById('roleCardGame').style.display = 'none';
     document.getElementById('startVotingBtn').style.display = 'none';
+    const cancelBtn = document.getElementById('cancelGameBtn');
+    if (cancelBtn) cancelBtn.style.display = 'none';
     document.getElementById('waitingVoteMessage').textContent = statusText;
     document.getElementById('waitingVoteMessage').style.display = 'block';
     const roleTitle = document.getElementById('roleTitleGame');

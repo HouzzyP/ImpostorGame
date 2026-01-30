@@ -74,11 +74,20 @@ function processVotes(room, io) {
     const eliminatedPlayer = room.players.find(p => p.id === eliminated);
     const impostorFound = eliminatedPlayer && eliminatedPlayer.role === 'impostor';
 
+    // Calcular quiénes votaron correctamente (votaron por el impostor eliminado)
+    let correctVoters = [];
+    if (impostorFound) {
+        correctVoters = room.votes
+            .filter(vote => vote.votedFor === eliminated)
+            .map(vote => vote.voterId);
+    }
+
     return {
         eliminated: eliminated,
         impostorFound: impostorFound,
         isTie: false,
-        votedPlayers: playersWithMaxVotes
+        votedPlayers: playersWithMaxVotes,
+        correctVoters: correctVoters
     };
 }
 

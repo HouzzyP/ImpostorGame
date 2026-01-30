@@ -3,14 +3,22 @@ const Joi = require('joi');
 const schemas = {
     // Join/Create Room
     joinRoom: Joi.object({
-        username: Joi.string().trim().min(2).max(15).pattern(/^[a-zA-Z0-9 ]+$/).required().messages({
-            'string.pattern.base': 'El nombre solo puede contener letras y números'
-        }),
+        username: Joi.string().trim().min(2).max(15)
+            .pattern(/^(?=.*[a-zA-Z])[a-zA-Z0-9 ]+$/)
+            .required()
+            .messages({
+                'string.pattern.base': 'El nombre debe tener al menos una letra'
+            }),
         roomCode: Joi.string().trim().uppercase().length(4).required()
     }),
 
     createRoom: Joi.object({
-        username: Joi.string().trim().min(2).max(15).pattern(/^[a-zA-Z0-9 ]+$/).required()
+        username: Joi.string().trim().min(2).max(15)
+            .pattern(/^(?=.*[a-zA-Z])[a-zA-Z0-9 ]+$/)
+            .required()
+            .messages({
+                'string.pattern.base': 'El nombre debe tener al menos una letra'
+            })
     }),
 
     // Config Update
