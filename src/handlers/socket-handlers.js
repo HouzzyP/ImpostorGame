@@ -203,8 +203,8 @@ function registerSocketHandlers(io, rooms) {
                 room.word = word;
 
                 // Asignar roles e impostores
-                assignRoles(room.players, room.config.impostorCount);
-                assignWordAndCategory(room.players, word, categoryNames[categoryKey]);
+                room.players = assignRoles(room.players, room.config.impostorCount);
+                room.players = assignWordAndCategory(room.players, word, categoryNames[categoryKey]);
 
                 // Generar orden aleatorio
                 room.descriptionOrder = [...room.players].sort(() => Math.random() - 0.5);

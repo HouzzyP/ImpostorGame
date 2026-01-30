@@ -17,8 +17,8 @@ const schemas = {
     updateConfig: Joi.object({
         roomCode: Joi.string().required(),
         config: Joi.object({
-            category: Joi.string().required(),
-            impostorCount: Joi.number().integer().min(1).max(3).required()
+            category: Joi.string().optional(),
+            impostorCount: Joi.number().integer().min(1).max(3).optional()
         }).required()
     }),
 

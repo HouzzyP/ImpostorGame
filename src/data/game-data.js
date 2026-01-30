@@ -180,6 +180,18 @@ const wordDatabase = {
         'SSD', 'RAM', 'Procesador', 'Tarjeta Grafica', 'Placa Madre', 'Fuente de Poder',
         'Servidor', 'Router', 'Firewall', 'VPN', 'Antivirus', 'Malware', 'Hacker',
         'Codigo', 'Algoritmo', 'Base de Datos', 'API', 'Framework', 'Backend', 'Frontend'
+    ],
+    futbolistas: [
+        'Messi', 'Cristiano Ronaldo', 'Maradona', 'Pele', 'Neymar', 'Mbappe', 'Haaland',
+        'Lewandowski', 'Benzema', 'Modric', 'Kroos', 'De Bruyne', 'Salah', 'Vinicius Jr',
+        'Bellingham', 'Pedri', 'Gavi', 'Foden', 'Saka', 'Rashford', 'Kane', 'Son',
+        'Zidane', 'Ronaldinho', 'Iniesta', 'Xavi', 'Casillas', 'Buffon', 'Neuer',
+        'Ramos', 'Pique', 'Van Dijk', 'Alisson', 'Courtois', 'Ter Stegen', 'Oblak',
+        'Di Maria', 'Aguero', 'Suarez', 'Cavani', 'Griezmann', 'Dybala', 'Lautaro',
+        'Julian Alvarez', 'Enzo Fernandez', 'De Paul', 'Mac Allister', 'Dibu Martinez',
+        'Ronaldo Nazario', 'Henry', 'Beckham', 'Pirlo', 'Kaka', 'Rooney', 'Ibrahimovic',
+        'Bale', 'Hazard', 'Pogba', 'Kante', 'Busquets', 'Marcelo', 'Carvajal',
+        'Dani Alves', 'Roberto Carlos', 'Cafu', 'Maldini', 'Cannavaro', 'Puyol'
     ]
 };
 
@@ -199,7 +211,8 @@ const categoryNames = {
     memes: 'Memes e Internet',
     profesiones: 'Profesiones',
     animales: 'Animales',
-    tecnologia: 'Tecnologia'
+    tecnologia: 'Tecnologia',
+    futbolistas: 'Futbolistas'
 };
 
 module.exports = { wordDatabase, categoryNames };
