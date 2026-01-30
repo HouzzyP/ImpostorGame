@@ -4,6 +4,9 @@
  * Variables de configuración centralizadas para el servidor
  */
 
+// Cargar variables de entorno
+require('dotenv').config();
+
 module.exports = {
     // Puerto del servidor
     PORT: process.env.PORT || 3001,
@@ -11,8 +14,9 @@ module.exports = {
     // Socket.IO config
     SOCKET_IO: {
         cors: {
-            origin: '*',
-            methods: ['GET', 'POST']
+            origin: process.env.ALLOWED_ORIGINS || '*',
+            methods: ['GET', 'POST'],
+            credentials: true
         }
     },
 
