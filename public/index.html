@@ -4,11 +4,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>El Impostor</title>
+    <title>El Impostor Online - Juego Multijugador Gratis</title>
+    <meta name="description"
+        content="El Impostor Online - Juego multijugador gratis de deducción social. Juega con amigos en el navegador, sin descargas. ¿Sos el impostor o el detective?">
+    <meta name="keywords"
+        content="el impostor online, el impostor multiplayer, el impostor, juego impostor, impostor online gratis, juego multijugador, juego deduccion social, juego con amigos">
+    <meta name="robots" content="index, follow">
+
+    <!-- Open Graph / Facebook / WhatsApp -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://elimpostor.com/">
+    <meta property="og:title" content="El Impostor - ¿Podrás ocultar tu identidad?">
+    <meta property="og:description"
+        content="Únete a la partida. Describe la palabra secreta sin revelarla. Vota para eliminar al impostor antes de que sea tarde.">
+    <meta property="og:image" content="https://elimpostor.com/icon.png">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://elimpostor.com/">
+    <meta property="twitter:title" content="El Impostor - Juego Online">
+    <meta property="twitter:description"
+        content="Juego de estrategia social. ¿Detective o Impostor? Juega ahora gratis.">
+    <meta property="twitter:image" content="https://elimpostor.com/icon.png">
+
+    <!-- PWA Config -->
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/icon.png">
+    <link rel="icon" type="image/png" href="/icon.png">
+    <meta name="theme-color" content="#121212">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+
+    <!-- Google AdSense - Descomentar cuando tengas tu ID de publicador -->
+    <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script> -->
+
     <script src="/socket.io/socket.io.js"></script>
 </head>
 
@@ -20,10 +54,13 @@
                 style="margin-right: 10px;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M16 4h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
-                    <rect x="2" y="6" width="12" height="12" rx="2"></rect>
-                    <circle cx="8" cy="12" r="2"></circle>
-                    <path d="M16 8v12"></path>
+                    <!-- Trophy icon -->
+                    <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+                    <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+                    <path d="M4 22h16"></path>
+                    <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
+                    <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
+                    <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
                 </svg>
             </button>
             <button class="theme-btn" onclick="toggleTheme()" title="Cambiar tema">
@@ -67,7 +104,7 @@
 
                 <!-- JOIN SCREEN -->
                 <div id="joinScreen" class="screen">
-                    <h1>Unirse</h1>
+                    <h2>Unirse</h2>
                     <p class="subtitle">Ingresa el codigo de la sala</p>
                     <div class="input-group">
                         <label>Tu nombre</label>
@@ -389,7 +426,19 @@
         </div>
     </div>
 
-    <script src="script.js"></script>
+
+    <!-- Footer con Cafecito -->
+    <footer class="site-footer">
+        <p>
+            ¿Te gusta El Impostor?
+            <a href="https://cafecito.app/houzzyp" target="_blank" rel="noopener" class="cafecito-link">
+                ☕ Invitame un cafecito
+            </a>
+        </p>
+        <p class="footer-credits">Hecho con 💜 en Argentina</p>
+    </footer>
+
+    <script type="module" src="js/main.js"></script>
 </body>
 
 </html>

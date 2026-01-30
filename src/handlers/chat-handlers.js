@@ -1,4 +1,5 @@
 const { getPlayerFromRoom } = require('../managers/room-manager');
+const { schemas, validateSocketInput } = require('../utils/validators');
 
 // Map to track user message timestamps: socket.id -> timestamp[]
 const messageTimestamps = new Map();
@@ -18,6 +19,10 @@ function registerChatHandlers(io, rooms) {
     io.on('connection', (socket) => {
 
         socket.on('sendChat', (data) => {
+            // 0. Input Validation
+            const error = validateSocketInput(schemas.chatMessage, data);
+            if (error) return; // Ignore invalid data
+
             const { roomCode, message } = data;
 
             // 1. Validate Room & Player
@@ -27,15 +32,7 @@ function registerChatHandlers(io, rooms) {
             const player = getPlayerFromRoom(room, socket.id);
             if (!player) return;
 
-            // 2. Validate Message Content
-            if (!message || typeof message !== 'string' || message.trim().length === 0) {
-                return;
-            }
-
-            if (message.length > MAX_MSG_LENGTH) {
-                socket.emit('error', `El mensaje no puede exceder ${MAX_MSG_LENGTH} caracteres.`);
-                return;
-            }
+            // 2. Validate Message Content (Joi already did format check, trust trimming)
 
             // 3. Spam Protection (Rate Limiting)
             const now = Date.now();

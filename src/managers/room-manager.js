@@ -223,6 +223,44 @@ function getRoomPublicInfo(room) {
     };
 }
 
+
+/**
+ * Marca a un jugador como desconectado
+ * @param {Object} room 
+ * @param {String} playerId 
+ * @returns {Object|null} El jugador desconectado o null
+ */
+function markPlayerDisconnected(room, playerId) {
+    const player = room.players.find(p => p.id === playerId);
+    if (player) {
+        player.disconnected = true;
+        player.disconnectTime = Date.now();
+        return player;
+    }
+    return null;
+}
+
+/**
+ * Actualiza el socket ID de un jugador (Reconexión)
+ * @param {Object} room 
+ * @param {String} username 
+ * @param {String} newSocketId 
+ * @returns {Object|null} El jugador actualizado o null
+ */
+function reconnectPlayer(room, username, newSocketId) {
+    const player = room.players.find(p => p.username.toLowerCase() === username.toLowerCase());
+    // Reconexion simple por nombre. 
+    // SOLO si estaba marcado como desconectado O si la conexion es muy reciente (race condition)
+    // Para seguridad, asumimos que si esta desconectado es seguro reconectar.
+    if (player && player.disconnected) {
+        player.id = newSocketId; // Actualizar ID de socket
+        player.disconnected = false;
+        player.disconnectTime = null;
+        return player;
+    }
+    return null;
+}
+
 module.exports = {
     createRoom,
     addPlayerToRoom,
@@ -233,5 +271,7 @@ module.exports = {
     getRoomHost,
     resetRoomForNewRound,
     getRoomPublicInfo,
-    updateRoomStats
+    updateRoomStats,
+    markPlayerDisconnected,
+    reconnectPlayer
 };

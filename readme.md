@@ -8,9 +8,8 @@
 [![Socket.IO](https://img.shields.io/badge/Socket.IO-4.6-010101?logo=socket.io&logoColor=white)](https://socket.io/)
 [![Express](https://img.shields.io/badge/Express-4.18-000000?logo=express&logoColor=white)](https://expressjs.com/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-2.1.0-brightgreen.svg)](package.json)
-
-[📖 Documentación](docs/INDICE.md)
+[![Version](https://img.shields.io/badge/version-2.2.0-brightgreen.svg)](package.json)
+[![Joi](https://img.shields.io/badge/Validation-Joi-00A36C)](https://joi.dev/)
 
 </div>
 
@@ -34,8 +33,9 @@
 | 📊 **Estadísticas Avanzadas** | Win Rate automático, Partidas Jugadas, Votos Correctos y Victorias por rol |
 | 👥 **Panel Global** | Seguimiento persistente de jugadores vivos sin parpadeos entre rondas |
 | 🎨 **UI Optimizada** | Lobby "side-by-side", Votación en grilla y badges para gestión de turnos |
-| 😄 **Reacciones en Vivo** | Sistema de emojis para interactuar durante la votación |
-| 🔄 **Continuidad** | Incremento de rondas en empates y gestión de re-conexión básica |
+| � **Reconexión Inteligente** | Grace Period de 45s para conexiones inestables (móviles) |
+| �️ **Seguridad (Joi)** | Validación estricta de datos para prevenir inyecciones y crashes |
+| 🧩 **Frontend Modular** | Código organizado en módulos ES6 (game, ui, socket, utils) |
 | 👻 **Modo Espectador** | Observa partidas en curso sin participar |
 
 ---
@@ -60,17 +60,17 @@ npm install
 # Iniciar servidor
 npm start
 
-# El juego estará disponible en http://localhost:3000
+# El juego estará disponible en http://localhost:4000
 ```
 
 ### Configuración (Opcional)
 
 ```bash
-# Cambiar el puerto (default: 3000)
+# Cambiar el puerto (default: 4000)
 PORT=8080 npm start
 
 # Modo desarrollo con auto-reload
-npm run dev:watch
+npm run dev
 ```
 
 ---
@@ -103,33 +103,37 @@ npm run dev:watch
 
 ```
 ImpostorGame/
-├── 📄 server.js              # Punto de entrada principal
+├── 📄 server.js              # Punto de entrada del servidor
 ├── 📦 package.json           # Dependencias y scripts
-├── 📁 src/                   # Código fuente del servidor
+├── 📁 src/                   # Backend (Node.js)
 │   ├── handlers/
-│   │   └── socket-handlers.js  # Manejo de eventos Socket.IO
+│   │   ├── socket-handlers.js  # Eventos Socket.IO + Reconexión
+│   │   └── chat-handlers.js    # Chat con rate-limiting
 │   ├── logic/
-│   │   ├── game-logic.js       # Lógica del juego (votos, ganadores)
-│   │   └── vote-processor.js   # Procesamiento de votaciones
+│   │   └── game-logic.js       # Votos, roles, ganadores
 │   ├── managers/
-│   │   ├── player-manager.js   # Gestión de jugadores
-│   │   └── room-manager.js     # Gestión de salas
+│   │   └── room-manager.js     # Salas, jugadores, grace period
 │   ├── utils/
-│   │   └── room-utils.js       # Utilidades auxiliares
+│   │   ├── utils.js            # Helpers generales
+│   │   └── validators.js       # Schemas Joi (seguridad)
 │   └── data/
-│       └── categories-data.js  # Base de datos de palabras
-├── 📁 public/                # Cliente (Frontend)
-│   ├── index.html            # Interfaz principal
-│   ├── script.js             # Lógica del cliente
-│   └── styles.css            # Estilos y temas
+│       └── game-data.js        # 700+ palabras, 16 categorías
+├── 📁 public/                # Frontend (ES6 Modules)
+│   ├── index.html            # Interfaz principal (PWA)
+│   ├── styles.css            # Estilos y temas
+│   ├── js/
+│   │   ├── main.js           # Entry point modular
+│   │   └── modules/
+│   │       ├── game.js       # Estado del juego (GameState)
+│   │       ├── ui.js         # Renderizado y DOM
+│   │       ├── socket.js     # Listeners de Socket.IO
+│   │       └── utils.js      # Toast, clipboard, helpers
+│   ├── manifest.json         # PWA manifest
+│   └── sw.js                 # Service Worker (offline)
 ├── 📁 config/                # Configuración
-│   └── game-config.js        # Parámetros del juego
-├── 📁 tests/                 # Tests automatizados
-│   └── voting_scenarios.js   # Escenarios de votación
-└── 📁 docs/                  # Documentación completa
-    ├── QUICK_START.md
-    ├── REFACTORIZACIÓN.md
-    └── ...
+│   └── config.js             # Puerto, CORS, Socket.IO
+└── 📁 tests/                 # Testing
+    └── chaos_simulation.js   # Stress test del servidor
 ```
 
 ---
@@ -140,14 +144,16 @@ ImpostorGame/
 - **Node.js** - Entorno de ejecución JavaScript
 - **Express** - Framework web minimalista
 - **Socket.IO** - Comunicación bidireccional en tiempo real
+- **Joi** - Validación de datos (seguridad)
+- **Helmet + CORS** - Headers de seguridad HTTP
 
 ### Frontend
-- **HTML5** - Estructura semántica
-- **CSS3** - Estilos modernos con variables CSS y Grid/Flexbox
-- **JavaScript (ES6+)** - Lógica del cliente sin frameworks
+- **HTML5** - Estructura semántica (PWA ready)
+- **CSS3** - Variables CSS, Grid/Flexbox, temas
+- **JavaScript ES6 Modules** - Código modular nativo (sin bundler)
 
 ### Arquitectura
-- **Patrón de módulos** - Separación clara de responsabilidades
+- **Módulos ES6** - `game.js`, `ui.js`, `socket.js` separados
 - **Event-driven** - Comunicación asíncrona con eventos
 - **State management** - Gestión centralizada del estado del juego
 
@@ -174,26 +180,18 @@ ImpostorGame/
 ### 🔐 Gestión de Salas Robusta
 - Códigos únicos de 4 letras
 - Validación de permisos (host/jugador/espectador)
-- Manejo de desconexiones y reconexiones
-- Limpieza automática de salas inactivas
+- **Grace Period de 45s** para reconexión (ideal para móviles)
+- Validación de inputs con Joi (anti-inyección)
 
 ---
 
-## 📖 Documentación Completa
+## �️ Seguridad
 
-### Para Usuarios
-- 📘 [Guía Visual](GUÍA_VISUAL.md) - Diagrama de flujo del proyecto
-
-### Para Desarrolladores
-- 🚀 [Quick Start](docs/QUICK_START.md) - Instalación paso a paso
-- 🔧 [Refactorización](docs/REFACTORIZACIÓN.md) - Arquitectura técnica detallada
-- 📂 [Estructura](ESTRUCTURA.md) - Organización de carpetas
-- 📚 [Índice Maestro](docs/INDICE.md) - Navegación completa
-
-### Para Managers/Product Owners
-- 📈 [Antes/Después](docs/ANTES_DESPUES.md) - Mejoras implementadas
-- 📋 [Resumen Ejecutivo](docs/RESUMEN_REFACTORIZACIÓN.md) - Visión general
-- 📊 [Estadísticas](docs/ESTADÍSTICAS.md) - Métricas del proyecto
+- **Joi Validation**: Todos los inputs de Socket.IO son validados contra schemas estrictos
+- **Rate Limiting**: Límite de mensajes de chat (8 msgs/10s, bloqueo 5s)
+- **Helmet**: Headers HTTP seguros
+- **CORS configurado**: Solo orígenes permitidos
+- **Reconexión segura**: Solo usuarios previamente conectados pueden reconectar
 
 ---
 
@@ -246,11 +244,14 @@ Los tests incluyen:
 ## 📝 Roadmap
 
 - [x] Sistema de puntuación persistente (Local Stats + Win Rate)
-- [ ] Chat en vivo durante discusión
+- [x] Chat en vivo durante discusión
+- [x] Frontend modular (ES6 Modules)
+- [x] Reconexión inteligente (Grace Period 45s)
+- [x] Validación de seguridad (Joi)
+- [x] PWA instalable
 - [ ] Salas privadas con contraseña
 - [ ] Personalización de avatares
-- [ ] Estadísticas históricas de jugadores
-- [ ] Modo torneo
+- [ ] Base de datos persistente (Redis/MongoDB)
 - [ ] Integración con Discord
 
 ---
@@ -278,7 +279,7 @@ Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) par
 
 **⭐ Si te gusta el proyecto, dale una estrella en GitHub ⭐**
 
-**Última actualización**: Enero 2026 | **Versión**: 2.1.0 | **Estado**: ✅ Producción
+**Última actualización**: Enero 2026 | **Versión**: 2.2.0 | **Estado**: ✅ Producción
 
 [⬆ Volver arriba](#-el-impostor)
 
