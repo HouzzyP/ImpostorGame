@@ -52,7 +52,11 @@ const server = http.createServer(app);
 const io = socketIO(server, config.SOCKET_IO);
 
 // Servir archivos estáticos
-app.use(express.static('public'));
+// Servir archivos estáticos con caché (1 día para assets)
+app.use(express.static('public', {
+    maxAge: '1d', // Cachear por 1 día
+    etag: true
+}));
 
 // Rutas SEO
 app.get('/como-jugar', (req, res) => {
