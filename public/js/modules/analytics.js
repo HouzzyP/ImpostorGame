@@ -94,12 +94,8 @@ export function initAnalytics() {
     // 1. Verificar si es visita única
     const isNewVisit = isUniqueVisit();
 
-    // DEBUG: Temporal para verificar en producción
-    console.log('[Analytics] Is new visit:', isNewVisit, 'SessionID:', getSessionId());
-
     if (isNewVisit) {
         // Solo enviar evento de "nueva visita" si es sesión única
-        console.log('[Analytics] Sending unique_visit event');
         trackEvent('unique_visit', {
             path: window.location.pathname,
             referrer: document.referrer,
@@ -107,8 +103,6 @@ export function initAnalytics() {
             screenResolution: `${window.screen.width}x${window.screen.height}`,
             language: navigator.language
         });
-    } else {
-        console.log('[Analytics] Not a unique visit, skipping unique_visit event');
     }
 
     // 2. Page View (se envía siempre para analytics de navegación interna)
@@ -117,10 +111,11 @@ export function initAnalytics() {
         referrer: document.referrer
     });
 
-    // 3. Button Clicks (Delegation)
+    // 3. Button Clicks (Delegation) - Excluir botones de UI (idioma, tema, etc.)
+    const EXCLUDED_BUTTONS = ['langBtn', 'themeToggle'];
     document.addEventListener('click', (e) => {
         const btn = e.target.closest('button');
-        if (btn && btn.id) {
+        if (btn && btn.id && !EXCLUDED_BUTTONS.includes(btn.id)) {
             trackEvent('btn_click', { id: btn.id });
         }
     });
