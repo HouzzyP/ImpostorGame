@@ -2,8 +2,8 @@
 export const dictionary = {
     es: {
         // Hero
-        "hero.title": "El Impostor",
-        "hero.subtitle": "El mejor <strong>Impostor Multiplayer</strong> para jugar con amigos online.<br>¡Descubrí al mentiroso!",
+        "hero.title": "El Impostor Online - Juego del Mentiroso Gratis",
+        "hero.subtitle": "Juego de deducción social tipo <strong>Spyfall en Español</strong>. Multijugador sin descargas, perfecto para videollamadas.<br>🔍 ¿Podrás descubrir al mentiroso?",
         "label.name": "Tu nombre",
         "placeholder.name": "Ingresa tu nombre",
         "btn.create": "Crear sala",
@@ -161,8 +161,8 @@ export const dictionary = {
     },
     en: {
         // Hero
-        "hero.title": " The Impostor",
-        "hero.subtitle": "The best <strong>Multiplayer Impostor</strong> game to play with friends online.<br>Find the liar!",
+        "hero.title": "The Impostor Online - Free Liar Game",
+        "hero.subtitle": "Social deduction game like <strong>Spyfall</strong>. Multiplayer with no downloads, perfect for video calls.<br>🔍 Can you spot the liar?",
         "label.name": "Your name",
         "placeholder.name": "Enter your name",
         "btn.create": "Create Room",
