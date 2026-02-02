@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Impostor Admin Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-color: #e0e0e0;
+            --accent: #8b5cf6;
+            --accent-2: #6366f1;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 2rem;
+        }
+
+        .refresh-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        .refresh-btn:hover {
+            background: var(--accent-2);
+        }
+
+        .section-title {
+            font-size: 1.2rem;
+            margin: 30px 0 15px;
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        /* Métricas principales */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+        }
+
+        .metric {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .metric.primary {
+            color: var(--accent);
+        }
+
+        .metric.success {
+            color: var(--success);
+        }
+
+        .metric.danger {
+            color: var(--danger);
+        }
+
+        .metric.warning {
+            color: var(--warning);
+        }
+
+        .label {
+            font-size: 0.85rem;
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .sublabel {
+            font-size: 0.75rem;
+            opacity: 0.6;
+            margin-top: 5px;
+        }
+
+        /* Gráficos */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .chart-box {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .chart-box h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            color: var(--accent);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 250px;
+        }
+
+        /* Tabla de páginas */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        th {
+            background: rgba(139, 92, 231, 0.2);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge.high {
+            background: var(--success);
+            color: white;
+        }
+
+        .badge.medium {
+            background: var(--warning);
+            color: white;
+        }
+
+        .badge.low {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        /* Loading state */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            opacity: 0.6;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .metrics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>🕵️‍♂️ Admin Dashboard</h1>
+            <button class="refresh-btn" onclick="loadStats()">🔄 Actualizar</button>
+        </header>
+
+        <div id="loading" class="loading">Cargando estadísticas...</div>
+
+        <div id="content" style="display: none;">
+            <!-- Analytics Section -->
+            <h2 class="section-title">📊 Analytics & Tráfico</h2>
+            <div class="metrics-grid">
+                <div class="card">
+                    <div class="metric primary" id="uniqueVisits">-</div>
+                    <div class="label">Visitas Únicas</div>
+                    <div class="sublabel">Sesiones reales</div>
+                </div>
+                <div class="card">
+                    <div class="metric success" id="totalPageViews">-</div>
+                    <div class="label">Page Views</div>
+                    <div class="sublabel">Navegaciones totales</div>
+                </div>
+                <div class="card">
+                    <div class="metric warning" id="uniqueSessions">-</div>
+                    <div class="label">Sesiones</div>
+                    <div class="sublabel">IDs únicos</div>
+                </div>
+                <div class="card">
+                    <div class="metric primary" id="avgPagesPerSession">-</div>
+                    <div class="label">Páginas/Sesión</div>
+                    <div class="sublabel">Engagement</div>
+                </div>
+            </div>
+
+            <!-- Game Stats Section -->
+            <h2 class="section-title">🎮 Estadísticas de Partidas</h2>
+            <div class="metrics-grid">
+                <div class="card">
+                    <div class="metric primary" id="totalGames">-</div>
+                    <div class="label">Partidas Jugadas</div>
+                </div>
+                <div class="card">
+                    <div class="metric danger" id="impostorWins">-</div>
+                    <div class="label">Victorias Impostores</div>
+                    <div class="sublabel" id="impostorRate">-%</div>
+                </div>
+                <div class="card">
+                    <div class="metric success" id="innocentWins">-</div>
+                    <div class="label">Victorias Inocentes</div>
+                    <div class="sublabel" id="innocentRate">-%</div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <h2 class="section-title">📈 Gráficos</h2>
+            <div class="charts-grid">
+                <div class="chart-box">
+                    <h3>Distribución de Victorias</h3>
+                    <div class="chart-container">
+                        <canvas id="winChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-box">
+                    <h3>Top Categorías</h3>
+                    <div class="chart-container">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-box">
+                    <h3>Tráfico: Visitas vs Page Views</h3>
+                    <div class="chart-container">
+                        <canvas id="trafficChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-box">
+                    <h3>Eventos de Usuarios</h3>
+                    <div class="chart-container">
+                        <canvas id="eventsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Pages Table -->
+            <h2 class="section-title">🔝 Páginas Más Visitadas</h2>
+            <div class="card">
+                <table id="topPagesTable">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Página</th>
+                            <th>Visitas</th>
+                            <th>Popularidad</th>
+                        </tr>
+                    </thead>
+                    <tbody id="topPagesBody">
+                        <tr>
+                            <td colspan="4" style="text-align: center; opacity: 0.5;">Sin datos</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let charts = {};
+
+        async function loadStats() {
+            try {
+                document.getElementById('loading').style.display = 'block';
+                document.getElementById('content').style.display = 'none';
+
+                const res = await fetch('/api/stats');
+                const data = await res.json();
+
+                if (data.error) {
+                    document.getElementById('loading').textContent = 'Error al cargar datos';
+                    return;
+                }
+
+                // === ANALYTICS METRICS ===
+                const uniqueVisits = data.unique_visits || 0;
+                const pageViews = data.page_views || 0;
+                const uniqueSessions = data.unique_sessions || 0;
+                const avgPages = uniqueSessions > 0 ? (pageViews / uniqueSessions).toFixed(1) : 0;
+
+                document.getElementById('uniqueVisits').textContent = uniqueVisits.toLocaleString();
+                document.getElementById('totalPageViews').textContent = pageViews.toLocaleString();
+                document.getElementById('uniqueSessions').textContent = uniqueSessions.toLocaleString();
+                document.getElementById('avgPagesPerSession').textContent = avgPages;
+
+                // === GAME STATS ===
+                const totalGames = data.total_games || 0;
+                const impostorWins = data.impostor_wins || 0;
+                const innocentWins = data.innocent_wins || 0;
+
+                document.getElementById('totalGames').textContent = totalGames.toLocaleString();
+                document.getElementById('impostorWins').textContent = impostorWins.toLocaleString();
+                document.getElementById('innocentWins').textContent = innocentWins.toLocaleString();
+
+                const impRate = totalGames > 0 ? Math.round((impostorWins / totalGames) * 100) : 0;
+                const innRate = totalGames > 0 ? Math.round((innocentWins / totalGames) * 100) : 0;
+
+                document.getElementById('impostorRate').textContent = impRate + '% win rate';
+                document.getElementById('innocentRate').textContent = innRate + '% win rate';
+
+                // === CHARTS ===
+                destroyCharts();
+
+                // Chart 1: Win Distribution (Doughnut)
+                charts.winChart = new Chart(document.getElementById('winChart'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Impostores', 'Inocentes'],
+                        datasets: [{
+                            data: [impostorWins, innocentWins],
+                            backgroundColor: ['#ef4444', '#10b981'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom', labels: { color: '#e0e0e0' } }
+                        }
+                    }
+                });
+
+                // Chart 2: Top Categories (Bar)
+                const catLabels = (data.top_categories || []).map(c => c.category);
+                const catData = (data.top_categories || []).map(c => parseInt(c.count));
+
+                charts.categoryChart = new Chart(document.getElementById('categoryChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: catLabels,
+                        datasets: [{
+                            label: 'Partidas',
+                            data: catData,
+                            backgroundColor: '#8b5cf6',
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: { color: '#e0e0e0' },
+                                grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                            },
+                            x: {
+                                ticks: { color: '#e0e0e0' },
+                                grid: { display: false }
+                            }
+                        }
+                    }
+                });
+
+                // Chart 3: Traffic (Visits vs PageViews)
+                charts.trafficChart = new Chart(document.getElementById('trafficChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: ['Visitas Únicas', 'Page Views', 'Sesiones'],
+                        datasets: [{
+                            label: 'Cantidad',
+                            data: [uniqueVisits, pageViews, uniqueSessions],
+                            backgroundColor: ['#8b5cf6', '#10b981', '#f59e0b'],
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: { color: '#e0e0e0' },
+                                grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                            },
+                            x: {
+                                ticks: { color: '#e0e0e0' },
+                                grid: { display: false }
+                            }
+                        }
+                    }
+                });
+
+                // Chart 4: User Events (Pie)
+                const events = data.events || [];
+                const eventLabels = events.map(e => e.event_type);
+                const eventData = events.map(e => parseInt(e.count));
+
+                charts.eventsChart = new Chart(document.getElementById('eventsChart'), {
+                    type: 'pie',
+                    data: {
+                        labels: eventLabels.length ? eventLabels : ['Sin eventos'],
+                        datasets: [{
+                            data: eventData.length ? eventData : [1],
+                            backgroundColor: [
+                                '#8b5cf6', '#ef4444', '#10b981', '#f59e0b', '#3b82f6', '#ec4899'
+                            ],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { color: '#e0e0e0', boxWidth: 12 }
+                            }
+                        }
+                    }
+                });
+
+                // === TOP PAGES TABLE ===
+                const topPages = data.top_pages || [];
+                const tbody = document.getElementById('topPagesBody');
+
+                if (topPages.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; opacity: 0.5;">Sin datos de páginas</td></tr>';
+                } else {
+                    const maxVisits = Math.max(...topPages.map(p => parseInt(p.visits)));
+                    tbody.innerHTML = topPages.map((page, idx) => {
+                        const visits = parseInt(page.visits);
+                        const percentage = maxVisits > 0 ? (visits / maxVisits) * 100 : 0;
+                        let badge = 'low';
+                        if (percentage > 70) badge = 'high';
+                        else if (percentage > 30) badge = 'medium';
+
+                        return `
+                            <tr>
+                                <td><strong>${idx + 1}</strong></td>
+                                <td><code>${page.path || '/'}</code></td>
+                                <td><strong>${visits.toLocaleString()}</strong></td>
+                                <td><span class="badge ${badge}">${Math.round(percentage)}%</span></td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+
+                // Show content
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('content').style.display = 'block';
+
+            } catch (err) {
+                console.error('Error loading stats:', err);
+                document.getElementById('loading').textContent = 'Error al cargar datos';
+            }
+        }
+
+        function destroyCharts() {
+            Object.values(charts).forEach(chart => {
+                if (chart) chart.destroy();
+            });
+            charts = {};
+        }
+
+        // Cargar al inicio
+        loadStats();
+    </script>
+</body>
+
+</html>

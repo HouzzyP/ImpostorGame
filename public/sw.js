@@ -1,8 +1,8 @@
-const CACHE_NAME = 'impostor-v1';
+const CACHE_NAME = 'impostor-v2';
 const ASSETS_TO_CACHE = [
-    '/icon.png',
+    '/icon.webp',
     '/styles.css',
-    '/script.js',
+    '/js/main.js',
     '/manifest.json'
 ];
 
@@ -31,7 +31,15 @@ self.addEventListener('activate', (event) => {
 // Estrategia: Network First (Intentar red, si falla usar cache)
 // Esto es ideal para juegos multiplayer donde queremos el contenido más fresco siempre.
 self.addEventListener('fetch', (event) => {
-    // Solo interceptar GET requests
+    // IGNORAR peticiones de Socket.IO, API y Admin
+    const url = new URL(event.request.url);
+    if (url.pathname.startsWith('/socket.io/') ||
+        url.pathname.startsWith('/api/') ||
+        url.pathname.startsWith('/admin')) {
+        return;
+    }
+
+    // Solo interceptar GET requests de archivos estáticos
     if (event.request.method !== 'GET') return;
 
     event.respondWith(

@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Política de Privacidad - El Impostor Online</title>
+    <meta name="robots" content="noindex, follow">
+    <link rel="stylesheet" href="styles.css">
+    <script>
+        // Cargar tema guardado antes de que se renderice la página
+        (function () {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
+    <style>
+        .privacy-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: var(--card-bg);
+            border-radius: 12px;
+        }
+
+        .privacy-container h1 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        .privacy-container h2 {
+            color: var(--text);
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            font-size: 1.4rem;
+        }
+
+        .privacy-container p,
+        .privacy-container li {
+            line-height: 1.6;
+            margin-bottom: 1rem;
+            color: var(--text-muted);
+        }
+
+        .privacy-container ul {
+            margin-left: 2rem;
+        }
+
+        .privacy-container strong {
+            color: var(--text);
+        }
+
+        .back-btn {
+            display: inline-block;
+            margin-bottom: 1rem;
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .back-btn:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Botón de tema (arriba a la derecha) -->
+    <button class="theme-btn" onclick="toggleTheme()" title="Cambiar tema"
+        style="position: fixed; top: 1rem; right: 1rem; z-index: 1000;">
+        <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+            width="20" height="20">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+        <svg class="icon-moon" style="display:none" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor" width="20" height="20">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+        </svg>
+    </button>
+
+    <div class="privacy-container">
+        <a href="/" class="back-btn">← Volver al juego</a>
+
+        <h1>Política de Privacidad</h1>
+        <p><strong>Última actualización:</strong> 2 de febrero de 2026</p>
+
+        <h2>1. Información que recopilamos</h2>
+        <p>En El Impostor Online recopilamos la siguiente información:</p>
+        <ul>
+            <li><strong>Nombre de usuario:</strong> El nombre que ingresas para jugar (no se requiere registro)</li>
+            <li><strong>Estadísticas de partidas:</strong> Resultados de partidas jugadas, victorias/derrotas
+                (almacenadas de forma anónima)</li>
+            <li><strong>Datos de uso:</strong> Información sobre cómo usas el juego mediante Google Analytics (páginas
+                visitadas, tiempo de sesión, clicks)</li>
+            <li><strong>Cookies técnicas:</strong> Para el funcionamiento del juego y Google Analytics</li>
+        </ul>
+
+        <h2>2. Cómo usamos tu información</h2>
+        <p>Utilizamos la información recopilada para:</p>
+        <ul>
+            <li>Permitir el funcionamiento del juego multijugador</li>
+            <li>Mostrar estadísticas globales y personales</li>
+            <li>Mejorar la experiencia del usuario</li>
+            <li>Analizar el uso del sitio web mediante Google Analytics</li>
+            <li>Detectar y prevenir problemas técnicos</li>
+        </ul>
+
+        <h2>3. Base legal (GDPR - Europa)</h2>
+        <p>Procesamos tus datos personales bajo las siguientes bases legales:</p>
+        <ul>
+            <li><strong>Ejecución de contrato:</strong> Para proporcionar el servicio del juego</li>
+            <li><strong>Consentimiento:</strong> Para cookies de análisis (Google Analytics)</li>
+            <li><strong>Interés legítimo:</strong> Para mejorar el servicio y detectar errores</li>
+        </ul>
+
+        <h2>4. Google Analytics</h2>
+        <p>Este sitio usa <strong>Google Analytics</strong> para analizar el uso del sitio web. Google Analytics usa
+            cookies para recopilar información de forma anónima. Puedes desactivar Google Analytics instalando el <a
+                href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener">complemento de
+                inhabilitación</a>.</p>
+        <p><strong>⚠️ Importante:</strong> Si rechazas las cookies analíticas, Google Analytics se desactiva pero el
+            juego sigue funcionando normalmente. Las estadísticas de partidas se guardan igualmente porque son
+            esenciales para el funcionamiento del juego.</p>
+
+        <h2>4.1. Diferencia entre Analytics y Estadísticas del Juego</h2>
+        <div
+            style="background: rgba(108, 92, 231, 0.1); padding: 1rem; border-radius: 8px; border-left: 4px solid var(--primary);">
+            <p><strong>🍪 Cookies de Analytics (opcionales):</strong></p>
+            <ul style="margin-bottom: 1rem;">
+                <li>Google Analytics para seguimiento de navegación</li>
+                <li>Puedes rechazarlas sin afectar el juego</li>
+                <li>Se desactivan si eliges "Solo esenciales"</li>
+            </ul>
+            <p><strong>📊 Estadísticas del Juego (esenciales):</strong></p>
+            <ul>
+                <li>Resultados de partidas guardados en base de datos (ganador, roles, fecha)</li>
+                <li>Necesarias para mostrar estadísticas globales en /admin</li>
+                <li>SIEMPRE activas (parte del funcionamiento del juego)</li>
+                <li>Datos anónimos: solo username temporal + resultado</li>
+            </ul>
+        </div>
+
+        <h2 id="cookies">5. Cookies</h2>
+        <p>Utilizamos los siguientes tipos de cookies:</p>
+        <ul>
+            <li><strong>Cookies esenciales:</strong> Para el funcionamiento básico del juego (tema oscuro/claro, idioma)
+            </li>
+            <li><strong>Cookies de análisis:</strong> Google Analytics (puedes rechazarlas sin afectar el juego)</li>
+        </ul>
+        <p>Puedes gestionar las cookies desde la configuración de tu navegador.</p>
+
+        <h2>6. Compartir información</h2>
+        <p>No vendemos ni compartimos tu información personal con terceros, excepto:</p>
+        <ul>
+            <li><strong>Google Analytics:</strong> Para análisis de uso (datos anonimizados)</li>
+            <li><strong>Requerimientos legales:</strong> Si la ley lo requiere</li>
+        </ul>
+
+        <h2>7. Almacenamiento de datos</h2>
+        <p>Los datos se almacenan:</p>
+        <ul>
+            <li><strong>Estadísticas de partidas:</strong> Indefinidamente (anónimas)</li>
+            <li><strong>Sesiones de juego:</strong> Solo durante la partida activa</li>
+            <li><strong>Cookies de Analytics:</strong> Hasta 2 años (según configuración de Google)</li>
+        </ul>
+
+        <h2>8. Tus derechos (GDPR y Ley Argentina 25.326)</h2>
+        <p>Tienes derecho a:</p>
+        <ul>
+            <li><strong>Acceder</strong> a tus datos personales</li>
+            <li><strong>Rectificar</strong> datos incorrectos</li>
+            <li><strong>Eliminar</strong> tus datos (derecho al olvido)</li>
+            <li><strong>Oponerte</strong> al procesamiento de datos</li>
+            <li><strong>Portabilidad</strong> de tus datos</li>
+            <li><strong>Retirar consentimiento</strong> en cualquier momento</li>
+        </ul>
+        <p>Para ejercer estos derechos, contáctanos en: <strong>juanpablobrizueladev@gmail.com</strong></p>
+
+        <h2>9. Protección de menores</h2>
+        <p>El Impostor Online no está dirigido a menores de 13 años. No recopilamos intencionalmente información de
+            menores de 13 años. Si eres padre/madre y descubres que tu hijo ha proporcionado información, contáctanos
+            para eliminarla.</p>
+
+        <h2>10. Seguridad</h2>
+        <p>Implementamos medidas de seguridad técnicas y organizativas para proteger tus datos contra accesos no
+            autorizados, pérdida o alteración.</p>
+
+        <h2>11. Cambios en esta política</h2>
+        <p>Podemos actualizar esta política ocasionalmente. Te notificaremos cambios importantes mediante un aviso en el
+            sitio web. La fecha de última actualización siempre estará visible arriba.</p>
+
+        <h2>12. Contacto</h2>
+        <p>Si tienes preguntas sobre esta política de privacidad, contáctanos en:</p>
+        <ul>
+            <li><strong>Email:</strong>juanpablobrizueladev@gmail.com</li>
+            <li><strong>Sitio web:</strong> https://elimpostormp.com</li>
+        </ul>
+
+        <h2>13. Ley aplicable</h2>
+        <p>Esta política se rige por las leyes de Argentina. Si resides en la Unión Europea, también se aplica el GDPR.
+        </p>
+
+        <hr style="margin: 2rem 0; border-color: var(--border);">
+
+        <p style="font-size: 0.9rem; color: var(--text-muted);">
+            <strong>Nota:</strong> El Impostor Online es un proyecto de código abierto y gratuito. No vendemos datos ni
+            usamos publicidad invasiva. Solo usamos Google Analytics para mejorar el juego.
+        </p>
+
+        <a href="/" class="btn btn-primary" style="margin-top: 2rem;">Volver al Juego</a>
+    </div>
+
+    <script>
+        // Toggle de tema (sincronizado con index.html)
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+
+            // Toggle icons
+            const sunIcon = document.querySelector('.icon-sun');
+            const moonIcon = document.querySelector('.icon-moon');
+
+            if (newTheme === 'dark') {
+                sunIcon.style.display = 'block';
+                moonIcon.style.display = 'none';
+            } else {
+                sunIcon.style.display = 'none';
+                moonIcon.style.display = 'block';
+            }
+        }
+
+        // Inicializar iconos según tema actual
+        (function () {
+            const theme = document.documentElement.getAttribute('data-theme');
+            const sunIcon = document.querySelector('.icon-sun');
+            const moonIcon = document.querySelector('.icon-moon');
+
+            if (theme === 'dark') {
+                sunIcon.style.display = 'block';
+                moonIcon.style.display = 'none';
+            } else {
+                sunIcon.style.display = 'none';
+                moonIcon.style.display = 'block';
+            }
+        })();
+    </script>
+</body>
+
+</html>

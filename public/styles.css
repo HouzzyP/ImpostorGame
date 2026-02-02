@@ -1398,7 +1398,60 @@ select {
 
 .stat-card.impostor {
     border-color: var(--impostor-soft);
-    background: radial-gradient(circle at top right, var(--impostor-soft), transparent 60%);
+}
+
+/* Turn Order Styles */
+.turn-order-card {
+    background: var(--bg-2);
+    padding: 1rem;
+    border-radius: 8px;
+    margin: 1rem 0;
+    text-align: center;
+    border: 1px solid var(--border);
+}
+
+.turn-order-card h4 {
+    margin: 0 0 0.5rem 0;
+    color: var(--text-2);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.turn-order-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.turn-item {
+    background: var(--bg-1);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid var(--border);
+}
+
+.turn-number {
+    background: var(--primary);
+    color: white;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+.turn-name {
+    color: var(--text-1);
+    font-weight: 500;
 }
 
 .stat-card.innocent {

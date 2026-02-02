@@ -25,6 +25,7 @@ const {
     reconnectPlayer
 } = require('../managers/room-manager');
 const { schemas, validateSocketInput } = require('../utils/validators');
+const { saveGameResult } = require('../services/statsService');
 
 const disconnectTimeouts = new Map(); // Key: "username-roomCode" -> TimeoutID
 
@@ -33,7 +34,6 @@ const disconnectTimeouts = new Map(); // Key: "username-roomCode" -> TimeoutID
  */
 function registerSocketHandlers(io, rooms) {
     io.on('connection', (socket) => {
-        console.log(`[${new Date().toLocaleTimeString()}] Usuario conectado: ${socket.id}`);
 
         // ========== CREAR SALA ==========
         socket.on('createRoom', (data) => {
@@ -49,7 +49,6 @@ function registerSocketHandlers(io, rooms) {
             rooms.set(roomCode, room);
             socket.join(roomCode);
 
-            console.log(`[${new Date().toLocaleTimeString()}] Sala creada: ${roomCode}`);
 
             socket.emit('roomCreated', {
                 roomCode: roomCode,
@@ -84,7 +83,6 @@ function registerSocketHandlers(io, rooms) {
                 }
 
                 socket.join(data.roomCode);
-                console.log(`[${new Date().toLocaleTimeString()}] ${data.username} RECONECTADO a ${data.roomCode}`);
 
                 // Enviar estado de sala
                 socket.emit('roomJoined', {
@@ -325,7 +323,6 @@ function registerSocketHandlers(io, rooms) {
 
             const player = getPlayerFromRoom(room, socket.id);
             if (player && player.isHost && room.gameState !== 'waiting') {
-                console.log(`[${new Date().toLocaleTimeString()}] Host canceló la partida en sala ${data.roomCode}`);
                 resetRoomForNewRound(room);
                 io.to(data.roomCode).emit('gameCancelled', {
                     message: 'El anfitrión canceló la partida',
@@ -367,7 +364,6 @@ function registerSocketHandlers(io, rooms) {
 
         // ========== DESCONEXIÓN ==========
         socket.on('disconnect', () => {
-            console.log(`[${new Date().toLocaleTimeString()}] Desconectado: ${socket.id}`);
 
             for (const [roomCode, room] of rooms.entries()) {
                 const playerToRemove = getPlayerFromRoom(room, socket.id);
@@ -462,6 +458,24 @@ function finishVotingProcess(room, io, roomCode) {
                     correctVoters: voteResult.correctVoters || []
                 });
                 io.to(roomCode).emit('statsUpdate', room.players.map(p => ({ id: p.id, username: p.username, stats: p.stats })));
+
+                // Save to DB
+                saveGameResult({
+                    roomCode: room.code,
+                    category: room.category,
+                    impostorCount: room.config.impostorCount,
+                    playerCount: room.players.length,
+                    winnerTeam: winCondition.winner,
+                    duration: 0, // TODO: Add start time tracking
+                    players: room.players.map(p => ({
+                        name: p.username,
+                        role: p.role,
+                        isImpostor: p.role === 'impostor',
+                        isWinner: (winCondition.winner === 'impostors' && p.role === 'impostor') ||
+                            (winCondition.winner === 'innocents' && p.role === 'innocent'),
+                        votedFor: room.votes.find(v => v.voterId === p.id)?.votedFor // Simplify: this is last round vote only
+                    }))
+                });
             }
         }
     }

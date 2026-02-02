@@ -1,10 +1,3 @@
-/**
- * El Impostor - Servidor Principal
- * 
- * Servidor de juego multiplayer en tiempo real usando Express y Socket.IO
- * La lógica está dividida en módulos separados para mejor mantenibilidad
- */
-
 const express = require('express');
 const http = require('http');
 const socketIO = require('socket.io');
@@ -14,13 +7,9 @@ const helmet = require('helmet');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 
-// Importar configuración
 const config = require('./config/config');
-
-// Importar módulos especializados
 const { registerSocketHandlers } = require('./src/handlers/socket-handlers');
 
-// ========== CONFIGURACIÓN DEL SERVIDOR ==========
 const PORT = config.PORT;
 
 const app = express();
@@ -30,13 +19,11 @@ app.use(helmet({
     contentSecurityPolicy: false // Desactivado por ahora para evitar problemas con scripts inline si los hay
 }));
 
-// Seguridad: CORS HTTP
 app.use(cors({
     origin: config.SOCKET_IO.cors.origin,
     credentials: true
 }));
 
-// Seguridad: Rate Limiting
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutos
     max: 100, // limite de 100 requests por IP
@@ -58,6 +45,11 @@ app.use(express.static('public', {
     etag: true
 }));
 
+const { getGlobalStats, saveEvent, getAnalytics } = require('./src/services/statsService');
+
+// Middleware JSON (necesario para el body del post)
+app.use(express.json());
+
 // Rutas SEO
 app.get('/como-jugar', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'como-jugar.html'));
@@ -68,16 +60,42 @@ app.get('/reglas', (req, res) => {
 app.get('/faq', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'faq.html'));
 });
+app.get('/privacidad', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'privacidad.html'));
+});
 
-// ========== ALMACENAMIENTO DE DATOS ==========
+const adminAuth = require('./src/middleware/auth');
+
+// Admin Panel (Protección básica)
+app.get('/admin', adminAuth, (req, res) => {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.sendFile(path.join(__dirname, 'private', 'admin.html'));
+});
+
+// API Stats
+app.get('/api/stats', adminAuth, async (req, res) => {
+    const stats = await getGlobalStats();
+    const analytics = await getAnalytics();
+
+    if (!stats) return res.status(500).json({ error: 'Error fetching stats' });
+
+    res.json({ ...stats, ...analytics });
+});
+
+// Analytics Ingest
+app.post('/api/event', (req, res) => {
+    const { type, data } = req.body;
+    if (type) {
+        saveEvent(type, data || {});
+    }
+    res.sendStatus(200);
+});
+
 const rooms = new Map();
 
-// ========== REGISTRO DE MANEJADORES ==========
 registerSocketHandlers(io, rooms);
 require('./src/handlers/chat-handlers').registerChatHandlers(io, rooms);
 
-// ========== INICIAR SERVIDOR ==========
 server.listen(PORT, () => {
-    console.log(`[${new Date().toLocaleTimeString()}] Servidor de El Impostor ejecutándose en puerto ${PORT}`);
-    console.log(`Accede a http://localhost:${PORT}`);
+    return;
 });

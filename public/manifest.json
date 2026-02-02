@@ -1,16 +1,29 @@
 {
-    "name": "El Impostor Online Multiplayer",
-    "short_name": "Impostor",
+    "name": "El Impostor Online - Juego del Mentiroso Gratis",
+    "short_name": "El Impostor",
+    "description": "Juego de deducción social multijugador tipo Spyfall. Juega gratis con amigos, descubre al mentiroso y diviértete sin descargas.",
     "start_url": "/",
+    "scope": "/",
     "display": "standalone",
     "background_color": "#121212",
     "theme_color": "#6c5ce7",
-    "orientation": "portrait",
+    "orientation": "any",
+    "categories": [
+        "games",
+        "entertainment",
+        "social"
+    ],
+    "lang": "es-ES",
+    "dir": "ltr",
     "icons": [
         {
             "src": "/icon.webp",
             "sizes": "512x512",
-            "type": "image/webp"
+            "type": "image/webp",
+            "purpose": "any maskable"
         }
-    ]
+    ],
+    "screenshots": [],
+    "related_applications": [],
+    "prefer_related_applications": false
 }

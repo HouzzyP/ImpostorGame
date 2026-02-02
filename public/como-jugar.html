@@ -20,6 +20,13 @@
     <link rel="icon" type="image/webp" href="/icon.webp">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/styles.css">
+    <script>
+        // Cargar tema guardado antes de que se renderice la página
+        (function () {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
 
     <!-- Structured Data: HowTo -->
     <script type="application/ld+json">
@@ -142,20 +149,35 @@
 </head>
 
 <body>
+    <!-- Botón de tema (arriba a la derecha) -->
+    <button class="theme-btn" onclick="toggleTheme()" title="Cambiar tema"
+        style="position: fixed; top: 1rem; right: 1rem; z-index: 1000;">
+        <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+            width="20" height="20">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+        <svg class="icon-moon" style="display:none" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor" width="20" height="20">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+        </svg>
+    </button>
+
     <div class="content-page">
-        <h1>🎮 Cómo Jugar El Impostor</h1>
+        <h1>Cómo Jugar El Impostor</h1>
         <p class="subtitle">Guía completa para dominar el juego de deducción social más adictivo</p>
 
-        <h2>📋 Objetivo del Juego</h2>
+        <h2>Objetivo del Juego</h2>
         <p><strong>El Impostor</strong> es un juego de deducción social donde los jugadores deben descubrir quién es el
             impostor antes de que sea demasiado tarde.</p>
 
         <div class="highlight-box">
-            <strong>🎯 Para Inocentes:</strong> Descubrir y eliminar al impostor mediante votación.<br>
-            <strong>🎭 Para Impostores:</strong> Ocultar tu identidad y evitar ser descubierto.
+            <strong>Para Inocentes:</strong> Descubrir y eliminar al impostor mediante votación.<br>
+            <strong>Para Impostores:</strong> Ocultar tu identidad y evitar ser descubierto.
         </div>
 
-        <h2>🚀 Cómo Empezar</h2>
+        <h2>Cómo Empezar</h2>
 
         <h3><span class="step-number">1</span>Crear o Unirse a una Sala</h3>
         <ul>
@@ -179,7 +201,7 @@
             <li><strong>Impostores:</strong> Solo verán la categoría, NO la palabra</li>
         </ul>
 
-        <h2>🎭 Fase de Discusión</h2>
+        <h2>Fase de Discusión</h2>
 
         <h3>Si sos Inocente:</h3>
         <ol>
@@ -199,10 +221,10 @@
         </ol>
 
         <div class="highlight-box">
-            <strong>💡 Ejemplo:</strong> Si la palabra es "Perro"<br>
-            ✅ Bueno: "Es el mejor amigo del hombre"<br>
-            ❌ Malo: "Es un perro" (demasiado obvio)<br>
-            ❌ Malo: "Tiene 4 patas" (demasiado vago, ayuda al impostor)
+            <strong>Ejemplo:</strong> Si la palabra es "Perro"<br>
+            Bueno: "Es el mejor amigo del hombre"<br>
+            Malo: "Es un perro" (demasiado obvio)<br>
+            Malo: "Tiene 4 patas" (demasiado vago, ayuda al impostor)
         </div>
 
         <h3>Si sos Impostor:</h3>
@@ -213,7 +235,7 @@
             <li><strong>Acusá a otros</strong> para desviar sospechas</li>
         </ol>
 
-        <h2>🗳️ Fase de Votación</h2>
+        <h2>Fase de Votación</h2>
         <p>Cuando el host inicie la votación:</p>
         <ul>
             <li>Cada jugador vota a quien cree que es el impostor</li>
@@ -222,7 +244,7 @@
             <li>Se revela si el eliminado era impostor o inocente</li>
         </ul>
 
-        <h2>🏆 Condiciones de Victoria</h2>
+        <h2>Condiciones de Victoria</h2>
 
         <h3>Los Inocentes Ganan si:</h3>
         <ul>
@@ -235,7 +257,7 @@
             <li>Los inocentes eliminan a otros inocentes por error</li>
         </ul>
 
-        <h2>💡 Consejos y Estrategias</h2>
+        <h2>Consejos y Estrategias</h2>
 
         <h3>Para Inocentes:</h3>
         <ul>
@@ -271,9 +293,42 @@
     </div>
 
     <script>
-        // Theme toggle
-        const theme = localStorage.getItem('theme') || 'dark';
-        document.documentElement.setAttribute('data-theme', theme);
+        // Toggle de tema (sincronizado con index.html)
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+
+            // Toggle icons
+            const sunIcon = document.querySelector('.icon-sun');
+            const moonIcon = document.querySelector('.icon-moon');
+
+            if (newTheme === 'dark') {
+                sunIcon.style.display = 'block';
+                moonIcon.style.display = 'none';
+            } else {
+                sunIcon.style.display = 'none';
+                moonIcon.style.display = 'block';
+            }
+        }
+
+        // Inicializar iconos según tema actual
+        (function () {
+            const theme = document.documentElement.getAttribute('data-theme');
+            const sunIcon = document.querySelector('.icon-sun');
+            const moonIcon = document.querySelector('.icon-moon');
+
+            if (theme === 'dark') {
+                sunIcon.style.display = 'block';
+                moonIcon.style.display = 'none';
+            } else {
+                sunIcon.style.display = 'none';
+                moonIcon.style.display = 'block';
+            }
+        })();
     </script>
 </body>
 

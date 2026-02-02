@@ -19,6 +19,13 @@
     <link rel="icon" type="image/webp" href="/icon.webp">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/styles.css">
+    <script>
+        // Cargar tema guardado antes de que se renderice la página
+        (function () {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
 
     <!-- Structured Data: FAQPage -->
     <script type="application/ld+json">
@@ -142,11 +149,26 @@
 </head>
 
 <body>
+    <!-- Botón de tema (arriba a la derecha) -->
+    <button class="theme-btn" onclick="toggleTheme()" title="Cambiar tema"
+        style="position: fixed; top: 1rem; right: 1rem; z-index: 1000;">
+        <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+            width="20" height="20">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+        <svg class="icon-moon" style="display:none" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor" width="20" height="20">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+        </svg>
+    </button>
+
     <div class="content-page">
-        <h1>❓ Preguntas Frecuentes</h1>
+        <h1>Preguntas Frecuentes</h1>
         <p class="subtitle">Respuestas a las dudas más comunes sobre El Impostor Online</p>
 
-        <h2>🎮 Jugabilidad Básica</h2>
+        <h2>Jugabilidad Básica</h2>
 
         <div class="faq-item">
             <div class="category-badge">BÁSICO</div>
@@ -184,7 +206,7 @@
             </div>
         </div>
 
-        <h2>🎭 Roles y Mecánicas</h2>
+        <h2>Roles y Mecánicas</h2>
 
         <div class="faq-item">
             <div class="category-badge">MECÁNICAS</div>
@@ -230,7 +252,7 @@
             </div>
         </div>
 
-        <h2>🔧 Problemas Técnicos</h2>
+        <h2>Problemas Técnicos</h2>
 
         <div class="faq-item">
             <div class="category-badge">TÉCNICO</div>
@@ -278,7 +300,7 @@
             </div>
         </div>
 
-        <h2>🎯 Estrategia y Consejos</h2>
+        <h2>Estrategia y Consejos</h2>
 
         <div class="faq-item">
             <div class="category-badge">ESTRATEGIA</div>
@@ -387,8 +409,42 @@
     </div>
 
     <script>
-        const theme = localStorage.getItem('theme') || 'dark';
-        document.documentElement.setAttribute('data-theme', theme);
+        // Toggle de tema (sincronizado con index.html)
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+
+            // Toggle icons
+            const sunIcon = document.querySelector('.icon-sun');
+            const moonIcon = document.querySelector('.icon-moon');
+
+            if (newTheme === 'dark') {
+                sunIcon.style.display = 'block';
+                moonIcon.style.display = 'none';
+            } else {
+                sunIcon.style.display = 'none';
+                moonIcon.style.display = 'block';
+            }
+        }
+
+        // Inicializar iconos según tema actual
+        (function () {
+            const theme = document.documentElement.getAttribute('data-theme');
+            const sunIcon = document.querySelector('.icon-sun');
+            const moonIcon = document.querySelector('.icon-moon');
+
+            if (theme === 'dark') {
+                sunIcon.style.display = 'block';
+                moonIcon.style.display = 'none';
+            } else {
+                sunIcon.style.display = 'none';
+                moonIcon.style.display = 'block';
+            }
+        })();
     </script>
 </body>
 

@@ -1,27 +1,50 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  
+  <!-- Página principal - Juego del Mentiroso Online -->
   <url>
     <loc>https://elimpostormp.com/</loc>
-    <lastmod>2026-01-30</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://elimpostormp.com/icon.webp</image:loc>
+      <image:title>El Impostor Online - Juego del Mentiroso Gratis</image:title>
+      <image:caption>Juego de deducción social tipo Spyfall en español</image:caption>
+    </image:image>
   </url>
+
+  <!-- Cómo Jugar -->
   <url>
     <loc>https://elimpostormp.com/como-jugar</loc>
-    <lastmod>2026-01-30</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
+
+  <!-- Reglas del Juego -->
   <url>
     <loc>https://elimpostormp.com/reglas</loc>
-    <lastmod>2026-01-30</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
+
+  <!-- Preguntas Frecuentes -->
   <url>
     <loc>https://elimpostormp.com/faq</loc>
-    <lastmod>2026-01-30</lastmod>
+    <lastmod>2026-02-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
+
+  <!-- Política de Privacidad -->
+  <url>
+    <loc>https://elimpostormp.com/privacidad</loc>
+    <lastmod>2026-02-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
 </urlset>

@@ -1,18 +1,20 @@
 import { game } from './modules/game.js';
 import * as UI from './modules/ui.js';
 import { setupSocketListeners, showLocalStats } from './modules/socket.js';
-import { toast, } from './modules/utils.js';
+import { toast } from './modules/utils.js';
+import { t, toggleLanguage } from './modules/i18n.js?v=5';
+import { initAnalytics } from './modules/analytics.js?v=1';
+
+// Initialize Analytics
+initAnalytics();
 
 // Initialize Socket
 const socket = io();
 game.setSocket(socket);
 setupSocketListeners(socket);
 
-// ==========================================
-// EXPOSE GLOBAL FUNCTIONS (Bridge for HTML)
-// ==========================================
-
-// UI & Theme
+// Global Functions
+window.toggleLanguage = toggleLanguage;
 window.toggleTheme = UI.toggleTheme;
 window.showLocalStats = showLocalStats;
 window.closeModal = (id) => document.getElementById(id).style.display = 'none';
@@ -20,13 +22,12 @@ window.showHomeScreen = UI.showHomeScreen;
 window.showJoinScreen = UI.showJoinScreen;
 
 // Room Management
-// Helper for username validation
 function validateUsername(name) {
-    if (!name) return 'Ingresa tu nombre';
-    if (name.length < 2) return 'El nombre debe tener al menos 2 caracteres';
-    if (name.length > 15) return 'El nombre no puede tener más de 15 caracteres';
-    if (!/[a-zA-Z]/.test(name)) return 'El nombre debe tener al menos una letra';
-    if (!/^[a-zA-Z0-9 ]+$/.test(name)) return 'El nombre solo puede tener letras, números y espacios';
+    if (!name) return t('error.name_required');
+    if (name.length < 2) return t('error.name_short');
+    if (name.length > 15) return t('error.name_long');
+    if (!/[a-zA-Z]/.test(name)) return t('error.name_chars');
+    if (!/^[a-zA-Z0-9 ]+$/.test(name)) return t('error.name_chars');
     return null;
 }
 
@@ -44,15 +45,35 @@ window.joinRoom = () => {
     const nameError = validateUsername(name);
     if (nameError) return toast(nameError, 'error');
 
-    if (!code) return toast('Ingresa el código de sala', 'error');
-    if (code.length !== 4) return toast('El código de sala debe tener 4 caracteres', 'error');
+    if (!code) return toast(t('error.code_required'), 'error');
+    if (code.length !== 4) return toast(t('error.code_length'), 'error');
 
     game.joinRoom(name, code);
 };
 
 window.copyRoomCode = () => {
     if (game.currentRoom) {
-        UI.copyTextToClipboard(game.currentRoom, 'Codigo copiado');
+        UI.copyTextToClipboard(game.currentRoom, t('share.copied_code'));
+    }
+};
+
+window.shareRoom = async () => {
+    if (!game.currentRoom) return;
+    const text = t('share.text').replace('{code}', game.currentRoom);
+    const url = 'https://elimpostormp.com';
+
+    if (navigator.share) {
+        try {
+            await navigator.share({
+                title: 'El Impostor Online',
+                text: text,
+                url: url
+            });
+        } catch (err) {
+            // User cancelled or error
+        }
+    } else {
+        UI.copyTextToClipboard(`${text} ${url}`, t('share.copied'));
     }
 };
 
@@ -155,11 +176,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // PWA Logic copied from script.js
 if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').then(registration => {
-            console.log('ServiceWorker registration successful');
-        }, err => {
-            console.log('ServiceWorker registration failed: ', err);
-        });
+    // UNREGISTER OLD WORKERS FIRST (Fix for broken cache)
+    navigator.serviceWorker.getRegistrations().then(function (registrations) {
+        for (let registration of registrations) {
+            registration.unregister();
+        }
+    }).then(() => {
+        // Register new fixed worker
+        navigator.serviceWorker.register('/sw.js');
     });
 }

@@ -20,6 +20,13 @@
     <link rel="icon" type="image/webp" href="/icon.webp">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/styles.css">
+    <script>
+        // Cargar tema guardado antes de que se renderice la página
+        (function () {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
 
     <style>
         .content-page {
@@ -123,11 +130,26 @@
 </head>
 
 <body>
+    <!-- Botón de tema (arriba a la derecha) -->
+    <button class="theme-btn" onclick="toggleTheme()" title="Cambiar tema"
+        style="position: fixed; top: 1rem; right: 1rem; z-index: 1000;">
+        <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+            width="20" height="20">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+        <svg class="icon-moon" style="display:none" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor" width="20" height="20">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+        </svg>
+    </button>
+
     <div class="content-page">
-        <h1>📜 Reglas Oficiales</h1>
+        <h1>Reglas Oficiales</h1>
         <p class="subtitle">Normas y mecánicas completas de El Impostor Online</p>
 
-        <h2>👥 Configuración de Partida</h2>
+        <h2>Configuración de Partida</h2>
 
         <h3>Jugadores</h3>
         <table>
@@ -147,17 +169,13 @@
                 <td>7-8 jugadores</td>
                 <td>1-3 impostores</td>
             </tr>
-            <tr>
-                <td>9+ jugadores</td>
-                <td>2-3 impostores</td>
-            </tr>
         </table>
 
         <div class="rule-box">
-            <strong>📌 Regla Importante:</strong> Se necesitan mínimo 4 jugadores para iniciar una partida.
+            <strong>Regla Importante:</strong> Se necesitan mínimo 4 jugadores para iniciar una partida.
         </div>
 
-        <h2>📜 Reglas Principales</h2>
+        <h2>Reglas Principales</h2>
         <ol>
             <li><strong>Mínimo 4 jugadores</strong> son necesarios para iniciar una partida equilibrada.</li>
             <li><strong>Orden estricto:</strong> Se respeta el turno de cada jugador.</li>
@@ -178,7 +196,7 @@
             <li><strong>Random:</strong> Categoría aleatoria cada ronda</li>
         </ul>
 
-        <h2>🎮 Mecánicas del Juego</h2>
+        <h2>Mecánicas del Juego</h2>
 
         <h3>Asignación de Roles</h3>
         <ol>
@@ -189,7 +207,7 @@
         </ol>
 
         <div class="rule-box">
-            <strong>🎭 Importante:</strong> Los impostores NO conocen la identidad de otros impostores (si hay más de
+            <strong>Importante:</strong> Los impostores NO conocen la identidad de otros impostores (si hay más de
             uno).
         </div>
 
@@ -202,7 +220,7 @@
         </ul>
 
         <div class="warning-box">
-            <strong>⚠️ Prohibido:</strong> Decir la palabra secreta directamente. Esto arruina la partida para todos.
+            <strong>Prohibido:</strong> Decir la palabra secreta directamente. Esto arruina la partida para todos.
         </div>
 
         <h3>Fase de Votación</h3>
@@ -215,7 +233,7 @@
             <li>Se revela el rol del jugador eliminado</li>
         </ol>
 
-        <h2>🏆 Condiciones de Victoria</h2>
+        <h2>Condiciones de Victoria</h2>
 
         <h3>Victoria de Inocentes</h3>
         <p>Los inocentes ganan cuando:</p>
@@ -231,11 +249,11 @@
         </ul>
 
         <div class="rule-box">
-            <strong>💡 Nota:</strong> Si hay múltiples impostores, TODOS ganan o pierden juntos, aunque no se conozcan
+            <strong>Nota:</strong> Si hay múltiples impostores, TODOS ganan o pierden juntos, aunque no se conozcan
             entre sí.
         </div>
 
-        <h2>📊 Sistema de Puntuación</h2>
+        <h2>Sistema de Puntuación</h2>
 
         <h3>Estadísticas Rastreadas</h3>
         <ul>
@@ -247,10 +265,10 @@
         </ul>
 
         <div class="rule-box">
-            <strong>💾 Almacenamiento:</strong> Las estadísticas se guardan localmente en tu navegador.
+            <strong>Almacenamiento:</strong> Las estadísticas se guardan localmente en tu navegador.
         </div>
 
-        <h2>👤 Roles del Jugador</h2>
+        <h2>Roles del Jugador</h2>
 
         <h3>Host (Anfitrión)</h3>
         <p>El jugador que crea la sala tiene privilegios especiales:</p>
@@ -270,7 +288,7 @@
             <li>Pueden participar en la siguiente ronda</li>
         </ul>
 
-        <h2>🔄 Reconexión</h2>
+        <h2>Reconexión</h2>
         <p>Si te desconectás durante una partida:</p>
         <ul>
             <li>Podés volver a unirte con el mismo nombre</li>
@@ -278,10 +296,10 @@
             <li>Si ya votaste, tu voto se mantiene</li>
         </ul>
 
-        <h2>⚖️ Normas de Conducta</h2>
+        <h2>Normas de Conducta</h2>
 
         <div class="warning-box">
-            <strong>🚫 Comportamientos No Permitidos:</strong>
+            <strong>Comportamientos No Permitidos:</strong>
             <ul>
                 <li>Revelar la palabra secreta directamente</li>
                 <li>Abandonar partidas repetidamente</li>
@@ -290,7 +308,7 @@
         </div>
 
         <div class="rule-box">
-            <strong>✅ Juego Limpio:</strong>
+            <strong>Juego Limpio:</strong>
             <ul>
                 <li>Respetá a todos los jugadores</li>
                 <li>Jugá tu rol honestamente</li>
@@ -310,8 +328,42 @@
     </div>
 
     <script>
-        const theme = localStorage.getItem('theme') || 'dark';
-        document.documentElement.setAttribute('data-theme', theme);
+        // Toggle de tema (sincronizado con index.html)
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+
+            // Toggle icons
+            const sunIcon = document.querySelector('.icon-sun');
+            const moonIcon = document.querySelector('.icon-moon');
+
+            if (newTheme === 'dark') {
+                sunIcon.style.display = 'block';
+                moonIcon.style.display = 'none';
+            } else {
+                sunIcon.style.display = 'none';
+                moonIcon.style.display = 'block';
+            }
+        }
+
+        // Inicializar iconos según tema actual
+        (function () {
+            const theme = document.documentElement.getAttribute('data-theme');
+            const sunIcon = document.querySelector('.icon-sun');
+            const moonIcon = document.querySelector('.icon-moon');
+
+            if (theme === 'dark') {
+                sunIcon.style.display = 'block';
+                moonIcon.style.display = 'none';
+            } else {
+                sunIcon.style.display = 'none';
+                moonIcon.style.display = 'block';
+            }
+        })();
     </script>
 </body>
 

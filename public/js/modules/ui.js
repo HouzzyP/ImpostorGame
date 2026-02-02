@@ -1,4 +1,5 @@
 import { toast } from './utils.js';
+import { t } from './i18n.js?v=5';
 
 // ============================================
 // THEME MANAGEMENT
@@ -263,7 +264,7 @@ export function updateLobbyLeaderboard(roomStats, myPlayerId) {
         tbody.innerHTML = '';
 
         if (sortedStats.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" class="waiting-text">Aún no hay datos</td></tr>';
+            tbody.innerHTML = `<tr><td colspan="5" class="waiting-text">${t('table.no_data')}</td></tr>`;
             return;
         }
 
@@ -285,6 +286,18 @@ export function updateLobbyLeaderboard(roomStats, myPlayerId) {
             `;
             tbody.appendChild(row);
         });
+    });
+}
+
+export function renderTurnOrder(order, elementIds) {
+    if (!order || !elementIds) return;
+    const listHtml = order.map((p, index) =>
+        `<div class="turn-item"><span class="turn-number">${index + 1}</span> <span class="turn-name">${escapeHtml(p.username)}</span></div>`
+    ).join('');
+
+    elementIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = listHtml;
     });
 }
 

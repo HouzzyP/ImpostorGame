@@ -26,3 +26,8 @@ Thumbs.db
 # Archivos temporales
 *.tmp
 .cache/
+
+# Scripts temporales locales
+check-events.js
+clean-old-events.js
+simulate-traffic.js

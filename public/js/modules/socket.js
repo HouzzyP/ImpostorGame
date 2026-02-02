@@ -1,6 +1,7 @@
 import { game } from './game.js';
 import * as UI from './ui.js';
 import { toast } from './utils.js';
+import { t } from './i18n.js?v=5';
 
 let votingTimerInterval = null;
 
@@ -113,7 +114,7 @@ export function setupSocketListeners(socket) {
 
     socket.on('becameHost', () => {
         game.isHost = true;
-        toast('Ahora eres el host');
+        toast(t('toast.became_host'));
         // Refresh UI state potentially needed here
     });
 
@@ -139,8 +140,10 @@ export function setupSocketListeners(socket) {
     });
 
     socket.on('gameStarted', ({ category, descriptionOrder }) => {
-        toast(`Categoría: ${category}`);
-        // Reset local state if needed
+        toast(`${t('toast.category')}${category}`);
+        if (descriptionOrder) {
+            UI.renderTurnOrder(descriptionOrder, ['roleScreenOrder', 'gameScreenOrder']);
+        }
     });
 
     socket.on('votingStarted', ({ votingOrder, currentVoterIndex }) => {

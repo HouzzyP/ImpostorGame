@@ -134,21 +134,16 @@ async function scenarioTie(ctx) {
 }
 
 async function run() {
-    console.log('Starting scenarios against', SERVER_URL);
     const ctx = await setupRoom();
 
-    console.log('Roles:', ctx.clients.map(c => ({ name: c.state.username, id: c.state.id, impostor: c.state.isImpostor })));
 
     // Scenario 1: innocent elimination
     const s1 = await scenarioInnocentElimination(ctx);
-    console.log('S1 Eliminated:', s1.result);
-    console.log('S1 ContinueGame:', s1.contPayload);
     if (s1.result.wasImpostor) throw new Error('Expected innocent eliminated');
     if (s1.result.gameEnded) throw new Error('Game should continue after innocent elimination');
 
     // Scenario 2: impostor elimination (should end game)
     const s2 = await scenarioImpostorElimination(ctx);
-    console.log('S2 Eliminated:', s2.result);
     if (!s2.result.wasImpostor) throw new Error('Expected impostor eliminated');
     if (!s2.result.gameEnded) throw new Error('Game should end after impostor elimination');
 
@@ -160,13 +155,10 @@ async function run() {
     await delay(300);
 
     const s3 = await scenarioTie(ctx);
-    console.log('S3 TieVoting:', s3.tieRes);
-    console.log('S3 ContinueGame:', s3.contRes);
     if (!s3.tieRes || !s3.contRes) throw new Error('Expected tie followed by continueGame');
 
     // Cleanup
     ctx.clients.forEach(c => c.socket.disconnect());
-    console.log('All scenarios passed');
 }
 
 run().catch(err => {

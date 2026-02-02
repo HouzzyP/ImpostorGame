@@ -27,8 +27,8 @@ const gameResults = [];
 // ============ UTILIDADES ============
 const delay = (ms) => new Promise(r => setTimeout(r, ms));
 const randomChoice = (arr) => arr[Math.floor(Math.random() * arr.length)];
-const log = (emoji, msg) => console.log(`[${new Date().toLocaleTimeString()}] ${emoji} ${msg}`);
-const debug = (msg) => DEBUG && console.log(`    [DEBUG] ${msg}`);
+const log = () => { };
+const debug = () => { };
 
 class TestClient {
     constructor(name) {
@@ -70,12 +70,6 @@ class TestClient {
 async function runTest() {
     const startTime = Date.now();
 
-    console.log('╔════════════════════════════════════════════════════════════╗');
-    console.log('║    🎮 TEST DE INTEGRACIÓN - EL IMPOSTOR 🎮                 ║');
-    console.log('╠════════════════════════════════════════════════════════════╣');
-    console.log(`║  URL: ${SERVER_URL.padEnd(52)}║`);
-    console.log(`║  Jugadores: ${PLAYERS_COUNT} (máx), Impostores: ${IMPOSTORS_COUNT}, Partidas: ${TOTAL_GAMES}       ║`);
-    console.log('╚════════════════════════════════════════════════════════════╝\n');
 
     const clients = [];
     let roomCode = null;
@@ -165,36 +159,22 @@ async function runTest() {
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
     const successfulGames = gameResults.filter((g, i) => i < TOTAL_GAMES && g.success).length;
 
-    console.log('\n');
-    console.log('╔════════════════════════════════════════════════════════════╗');
-    console.log('║                   📊 RESUMEN DE TESTS                      ║');
-    console.log('╠════════════════════════════════════════════════════════════╣');
-    console.log(`║  Tiempo total: ${elapsed.padEnd(44)}s║`);
-    console.log(`║  Partidas exitosas: ${successfulGames}/${TOTAL_GAMES}                                   ║`);
-    console.log(`║  Tests pasados: ${testsPassed}                                        ║`);
-    console.log(`║  Tests fallidos: ${testsFailed}                                       ║`);
-    console.log('╠════════════════════════════════════════════════════════════╣');
 
     gameResults.slice(0, TOTAL_GAMES).forEach((g, i) => {
         const status = g.success ? '✅' : '❌';
         const info = g.success
             ? `${g.rounds} rondas, Ganador: ${g.winner}`
             : `${g.rounds} rondas, Error: ${g.error || 'timeout'}`;
-        console.log(`║  Partida ${i + 1}: ${status} ${info.substring(0, 40).padEnd(40)}║`);
     });
 
     if (gameResults.length > TOTAL_GAMES) {
         const reconnect = gameResults[TOTAL_GAMES];
-        console.log(`║  Reconexión: ${reconnect.success ? '✅ OK' : '❌ FALLÓ'}                                  ║`);
     }
 
-    console.log('╚════════════════════════════════════════════════════════════╝');
 
     if (testsFailed === 0) {
-        console.log('\n🎉 ¡TODOS LOS TESTS PASARON! 🎉\n');
         process.exit(0);
     } else {
-        console.log('\n⚠️ Algunos tests fallaron\n');
         process.exit(1);
     }
 }
@@ -411,7 +391,6 @@ async function testReconnection(clients, roomCode) {
 
 // Timeout global
 setTimeout(() => {
-    console.log('\n⏰ TIMEOUT GLOBAL');
     process.exit(1);
 }, TEST_TIMEOUT_MS);
 

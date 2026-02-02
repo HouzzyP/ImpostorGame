@@ -1,4 +1,39 @@
+# robots.txt para El Impostor Online - Juego del Mentiroso Multijugador
 User-agent: *
 Allow: /
+Allow: /index.html
+Allow: /styles.css
+Allow: /js/
+Allow: /icon.webp
+Allow: /manifest.json
 
+# Páginas importantes para indexar (juego de deducción social)
+Allow: /como-jugar
+Allow: /reglas
+Allow: /faq
+
+# Bloquear panel de administración y APIs privadas
+Disallow: /admin
+Disallow: /admin/
+Disallow: /api/stats
+Disallow: /private/
+
+# Bloquear archivos del sistema
+Disallow: /.env
+Disallow: /node_modules/
+Disallow: /*.map$
+
+# Sitemap principal
 Sitemap: https://elimpostormp.com/sitemap.xml
+
+# Optimización para bots específicos
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 0
+
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 0
+
+User-agent: facebookexternalhit
+Allow: /
