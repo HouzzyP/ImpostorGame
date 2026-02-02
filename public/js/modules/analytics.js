@@ -1,5 +1,6 @@
 // Sistema de tracking de visitas únicas
 const SESSION_KEY = 'impostor-session-id';
+const LAST_SESSION_KEY = 'impostor-last-session-id'; // Para recuperar sesión
 const VISIT_TIMESTAMP_KEY = 'impostor-last-visit';
 const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutos de inactividad = nueva sesión
 
@@ -24,24 +25,25 @@ function isUniqueVisit() {
 
     // 2. Revisar timestamp de última actividad (localStorage)
     const lastVisit = localStorage.getItem(VISIT_TIMESTAMP_KEY);
+    const lastSessionId = localStorage.getItem(LAST_SESSION_KEY);
     const now = Date.now();
 
-    if (lastVisit) {
+    if (lastVisit && lastSessionId) {
         const timeSinceLastVisit = now - parseInt(lastVisit, 10);
 
         // Si pasaron menos de 30 minutos, continuar sesión existente
         if (timeSinceLastVisit < SESSION_TIMEOUT) {
-            // Crear sesión recuperada (el usuario cerró el tab pero volvió rápido)
-            const sessionId = generateSessionId();
-            sessionStorage.setItem(SESSION_KEY, sessionId);
+            // Recuperar sesión (el usuario cerró el tab pero volvió rápido)
+            sessionStorage.setItem(SESSION_KEY, lastSessionId);
             localStorage.setItem(VISIT_TIMESTAMP_KEY, now.toString());
             return false; // No es visita nueva, es continuación
         }
     }
 
-    // 3. Es una visita nueva (no hay sesión activa y pasó tiempo suficiente)
+    // 3. Es una visita nueva (no hay sesión activa y pasó tiempo suficiente o es primera vez)
     const sessionId = generateSessionId();
     sessionStorage.setItem(SESSION_KEY, sessionId);
+    localStorage.setItem(LAST_SESSION_KEY, sessionId);
     localStorage.setItem(VISIT_TIMESTAMP_KEY, now.toString());
 
     return true;
@@ -53,7 +55,11 @@ function isUniqueVisit() {
  */
 function updateActivity() {
     const now = Date.now();
+    const currentSessionId = getSessionId();
     localStorage.setItem(VISIT_TIMESTAMP_KEY, now.toString());
+    if (currentSessionId) {
+        localStorage.setItem(LAST_SESSION_KEY, currentSessionId);
+    }
 }
 
 /**
