@@ -94,8 +94,12 @@ export function initAnalytics() {
     // 1. Verificar si es visita única
     const isNewVisit = isUniqueVisit();
 
+    // DEBUG: Temporal para verificar en producción
+    console.log('[Analytics] Is new visit:', isNewVisit, 'SessionID:', getSessionId());
+
     if (isNewVisit) {
         // Solo enviar evento de "nueva visita" si es sesión única
+        console.log('[Analytics] Sending unique_visit event');
         trackEvent('unique_visit', {
             path: window.location.pathname,
             referrer: document.referrer,
@@ -104,6 +108,7 @@ export function initAnalytics() {
             language: navigator.language
         });
     } else {
+        console.log('[Analytics] Not a unique visit, skipping unique_visit event');
     }
 
     // 2. Page View (se envía siempre para analytics de navegación interna)
