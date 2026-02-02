@@ -353,7 +353,10 @@ function updateDOM() {
         if (el.tagName === 'INPUT' && el.getAttribute('placeholder')) {
             el.placeholder = text;
         } else {
-            el.innerHTML = text; // innerHTML allows <strong> tags
+            // Only update if content changed to prevent flickering
+            if (el.innerHTML !== text) {
+                el.innerHTML = text; // innerHTML allows <strong> tags
+            }
         }
     });
 
