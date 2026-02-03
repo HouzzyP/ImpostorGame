@@ -26,14 +26,50 @@ const {
 } = require('../managers/room-manager');
 const { schemas, validateSocketInput } = require('../utils/validators');
 const { saveGameResult } = require('../services/statsService');
+const logger = require('../utils/logger');
 
 const disconnectTimeouts = new Map(); // Key: "username-roomCode" -> TimeoutID
+
+// Rate limiting por socket - prevenir spam de eventos
+const socketRateLimits = new Map(); // Key: socketId -> { count, resetTime }
+const RATE_LIMIT_WINDOW = 10000; // 10 segundos
+const RATE_LIMIT_MAX_EVENTS = 30; // máximo 30 eventos por ventana
+
+function checkSocketRateLimit(socketId) {
+    const now = Date.now();
+    const limit = socketRateLimits.get(socketId);
+
+    if (!limit || now > limit.resetTime) {
+        // Nueva ventana de tiempo
+        socketRateLimits.set(socketId, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
+        return true;
+    }
+
+    if (limit.count >= RATE_LIMIT_MAX_EVENTS) {
+        return false; // Bloqueado por rate limit
+    }
+
+    limit.count++;
+    return true;
+}
 
 /**
  * Registra todos los manejadores de Socket.IO
  */
 function registerSocketHandlers(io, rooms) {
     io.on('connection', (socket) => {
+
+        // Wrapper para aplicar rate limiting a todos los eventos críticos
+        const rateLimitedOn = (event, handler) => {
+            socket.on(event, (...args) => {
+                if (!checkSocketRateLimit(socket.id)) {
+                    logger.security(`Rate limit exceeded on event "${event}"`, { socketId: socket.id });
+                    socket.emit('error', 'Too many requests. Please slow down.');
+                    return;
+                }
+                handler(...args);
+            });
+        };
 
         // ========== CREAR SALA ==========
         socket.on('createRoom', (data) => {
@@ -153,8 +189,8 @@ function registerSocketHandlers(io, rooms) {
             socket.emit('roomJoined', { roomCode: data.roomCode, room: getRoomPublicInfo(room), categories: categoryNames });
         });
 
-        // ========== ACTUALIZAR CONFIGURACIÓN ==========
-        socket.on('updateConfig', (data) => {
+        // ========== ACTUALIZAR CONFIGURACIÓN ========== (con rate limiting)
+        rateLimitedOn('updateConfig', (data) => {
             const error = validateSocketInput(schemas.updateConfig, data);
             if (error) return;
 
@@ -168,8 +204,8 @@ function registerSocketHandlers(io, rooms) {
             }
         });
 
-        // ========== CATEGORÍA ALEATORIA ==========
-        socket.on('randomCategory', (data) => {
+        // ========== CATEGORÍA ALEATORIA ========== (con rate limiting)
+        rateLimitedOn('randomCategory', (data) => {
             if (!data || !data.roomCode) return;
             const room = rooms.get(data.roomCode);
             if (!room) return;
@@ -181,8 +217,8 @@ function registerSocketHandlers(io, rooms) {
             });
         });
 
-        // ========== INICIAR JUEGO ==========
-        socket.on('startGame', (data) => {
+        // ========== INICIAR JUEGO ========== (con rate limiting)
+        rateLimitedOn('startGame', (data) => {
             if (!data || !data.roomCode) return;
             const room = rooms.get(data.roomCode);
             if (!room) return;
@@ -231,8 +267,8 @@ function registerSocketHandlers(io, rooms) {
             }
         });
 
-        // ========== INICIAR VOTACIÓN ==========
-        socket.on('startVoting', (data) => {
+        // ========== INICIAR VOTACIÓN ========== (con rate limiting)
+        rateLimitedOn('startVoting', (data) => {
             if (!data || !data.roomCode) return;
             const room = rooms.get(data.roomCode);
             if (!room) return;
@@ -248,8 +284,8 @@ function registerSocketHandlers(io, rooms) {
             }
         });
 
-        // ========== EMITIR VOTO ==========
-        socket.on('castVote', (data) => {
+        // ========== EMITIR VOTO ========== (con rate limiting)
+        rateLimitedOn('castVote', (data) => {
             const error = validateSocketInput(schemas.vote, data);
             if (error) return;
 
@@ -364,6 +400,8 @@ function registerSocketHandlers(io, rooms) {
 
         // ========== DESCONEXIÓN ==========
         socket.on('disconnect', () => {
+            // Limpiar rate limit del socket desconectado
+            socketRateLimits.delete(socket.id);
 
             for (const [roomCode, room] of rooms.entries()) {
                 const playerToRemove = getPlayerFromRoom(room, socket.id);

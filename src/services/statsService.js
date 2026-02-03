@@ -1,4 +1,5 @@
 const db = require('../../database/db');
+const logger = require('../utils/logger');
 
 async function saveGameResult(gameData) {
     const { roomCode, category, impostorCount, playerCount, winnerTeam, duration, players } = gameData;
@@ -29,7 +30,7 @@ async function saveGameResult(gameData) {
         await client.query('COMMIT');
     } catch (e) {
         await client.query('ROLLBACK');
-        console.error('❌ Error saving game stats:', e);
+        logger.error('Error saving game stats', { error: e.message, roomCode: gameData.roomCode });
     } finally {
         client.release();
     }
@@ -57,7 +58,7 @@ async function getGlobalStats() {
             top_categories: categories.rows
         };
     } catch (e) {
-        console.error('Error fetching global stats:', e);
+        logger.error('Error fetching global stats', { error: e.message });
         return null;
     }
 }
@@ -69,7 +70,7 @@ async function saveEvent(eventType, eventData) {
             [eventType, eventData]
         );
     } catch (e) {
-        console.error('Error saving analytical event:', e);
+        logger.error('Error saving analytical event', { error: e.message, eventType });
     }
 }
 
@@ -120,7 +121,7 @@ async function getAnalytics() {
             top_pages: topPages.rows
         };
     } catch (e) {
-        console.error('Error fetching analytics:', e);
+        logger.error('Error fetching analytics', { error: e.message });
         return {
             unique_visits: 0,
             page_views: 0,

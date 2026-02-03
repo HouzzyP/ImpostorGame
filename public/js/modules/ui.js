@@ -1,5 +1,4 @@
 import { toast } from './utils.js';
-import { t } from './i18n.js?v=5';
 
 // ============================================
 // THEME MANAGEMENT
@@ -38,6 +37,7 @@ export function showScreen(id) {
 
 export function showHomeScreen() {
     showScreen('homeScreen');
+    hideChat();
 }
 
 export function showJoinScreen() {
@@ -48,6 +48,7 @@ export function showJoinScreen() {
         if (name) joinNameInput.value = name;
     }
     showScreen('joinScreen');
+    hideChat();
 }
 
 // ============================================
@@ -207,12 +208,32 @@ export function updateVotingUI(votingOrder, currentVoterIndex, myPlayerId, castV
 // CHAT & LEADERBOARD
 // ============================================
 
+export function showChat() {
+    const chat = document.getElementById('chatContainer');
+    if (chat) {
+        chat.classList.add('visible');
+    }
+}
+
+export function hideChat() {
+    const chat = document.getElementById('chatContainer');
+    if (chat) {
+        chat.classList.remove('visible');
+    }
+}
+
 export function toggleChat() {
     const chat = document.getElementById('chatContainer');
-    const isHidden = chat.style.display === 'none';
-    chat.style.display = isHidden ? 'flex' : 'none';
+    const isDesktop = window.innerWidth >= 900;
 
-    if (isHidden) {
+    if (isDesktop) return; // En desktop, el chat siempre está visible
+
+    // En mobile, toggle visibility
+    const isVisible = chat.classList.contains('visible');
+    if (isVisible) {
+        hideChat();
+    } else {
+        showChat();
         setTimeout(() => {
             const input = document.getElementById('chatInput');
             if (input) input.focus();
@@ -264,7 +285,7 @@ export function updateLobbyLeaderboard(roomStats, myPlayerId) {
         tbody.innerHTML = '';
 
         if (sortedStats.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="5" class="waiting-text">${t('table.no_data')}</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="5" class="waiting-text">Sin datos aún</td></tr>`;
             return;
         }
 

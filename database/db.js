@@ -1,5 +1,6 @@
 const { Pool } = require('pg');
 require('dotenv').config();
+const logger = require('../src/utils/logger');
 
 // Force IPv4 DNS resolution to avoid ENETUNREACH errors
 const dns = require('dns');
@@ -20,10 +21,11 @@ const pool = new Pool({
 
 // Test connection
 pool.on('connect', () => {
+    logger.debug('Database connection established');
 });
 
 pool.on('error', (err) => {
-    console.error('🔥 Unexpected error on idle client', err);
+    logger.error('Unexpected database error on idle client', { error: err.message, code: err.code });
     process.exit(-1);
 });
 

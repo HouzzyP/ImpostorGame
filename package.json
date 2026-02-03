@@ -1,12 +1,16 @@
 {
     "name": "el-impostor",
-    "version": "2.2.0",
-    "description": "Juego multijugador de deducción social en tiempo real con Socket.IO, PWA y reconexión inteligente",
+    "version": "2.6.0",
+    "description": "Juego multijugador de deducción social en tiempo real con Socket.IO, PostgreSQL analytics, estadísticas globales públicas, Winston logging, gzip compression, PWA y reconexión inteligente",
     "main": "server.js",
     "scripts": {
         "start": "node server.js",
         "dev": "node server.js",
-        "dev:watch": "nodemon server.js"
+        "dev:watch": "nodemon server.js",
+        "test": "node tests/voting_scenarios.js",
+        "test:flow": "node tests/full_game_flow.js",
+        "test:integration": "node tests/integration_test.js",
+        "test:chaos": "node tests/chaos_simulation.js"
     },
     "keywords": [
         "game",
@@ -18,6 +22,7 @@
     "license": "MIT",
     "dependencies": {
         "basic-auth": "^2.0.1",
+        "compression": "^1.8.1",
         "cors": "^2.8.6",
         "dotenv": "^17.2.3",
         "express": "^4.18.2",
@@ -25,7 +30,8 @@
         "helmet": "^8.1.0",
         "joi": "^18.0.2",
         "pg": "^8.18.0",
-        "socket.io": "^4.6.1"
+        "socket.io": "^4.6.1",
+        "winston": "^3.19.0"
     },
     "devDependencies": {
         "nodemon": "^3.1.11",

@@ -9,6 +9,7 @@
 function createRoom(roomCode, player) {
     return {
         code: roomCode,
+        createdAt: Date.now(), // Para cleanup automático
         players: [
             {
                 id: player.id,

@@ -111,8 +111,8 @@ export function initAnalytics() {
         referrer: document.referrer
     });
 
-    // 3. Button Clicks (Delegation) - Excluir botones de UI (idioma, tema, etc.)
-    const EXCLUDED_BUTTONS = ['langBtn', 'themeToggle'];
+    // 3. Button Clicks (Delegation) - Excluir botones de UI (tema, etc.)
+    const EXCLUDED_BUTTONS = ['themeToggle'];
     document.addEventListener('click', (e) => {
         const btn = e.target.closest('button');
         if (btn && btn.id && !EXCLUDED_BUTTONS.includes(btn.id)) {

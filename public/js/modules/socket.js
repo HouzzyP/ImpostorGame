@@ -1,7 +1,6 @@
 import { game } from './game.js';
 import * as UI from './ui.js';
 import { toast } from './utils.js';
-import { t } from './i18n.js?v=5';
 
 let votingTimerInterval = null;
 
@@ -18,15 +17,10 @@ export function setupSocketListeners(socket) {
         UI.updateCategorySelect(cats);
         document.getElementById('roomCodeDisplay').textContent = roomCode;
 
-        // Chat Setup Defaults
+        // Chat Setup
         document.getElementById('chatToggleBtn').style.display = 'block';
         document.getElementById('chatMessages').innerHTML = '<div class="chat-system-msg">¡Bienvenido al chat!</div>';
-
-        if (window.innerWidth > 768) {
-            document.getElementById('chatContainer').style.display = 'flex';
-        } else {
-            document.getElementById('chatContainer').style.display = 'none';
-        }
+        UI.showChat();
 
         UI.showScreen('lobbyHostScreen');
     });
@@ -44,12 +38,7 @@ export function setupSocketListeners(socket) {
         // Chat Setup
         document.getElementById('chatToggleBtn').style.display = 'block';
         document.getElementById('chatMessages').innerHTML = '<div class="chat-system-msg">¡Bienvenido al chat!</div>';
-
-        if (window.innerWidth > 768) {
-            document.getElementById('chatContainer').style.display = 'flex';
-        } else {
-            document.getElementById('chatContainer').style.display = 'none';
-        }
+        UI.showChat();
 
         if (game.isSpectator) {
             toast('Unido como espectador');
@@ -114,7 +103,7 @@ export function setupSocketListeners(socket) {
 
     socket.on('becameHost', () => {
         game.isHost = true;
-        toast(t('toast.became_host'));
+        toast('Ahora eres el host');
         // Refresh UI state potentially needed here
     });
 
@@ -140,7 +129,7 @@ export function setupSocketListeners(socket) {
     });
 
     socket.on('gameStarted', ({ category, descriptionOrder }) => {
-        toast(`${t('toast.category')}${category}`);
+        toast(`Categoría: ${category}`);
         if (descriptionOrder) {
             UI.renderTurnOrder(descriptionOrder, ['roleScreenOrder', 'gameScreenOrder']);
         }

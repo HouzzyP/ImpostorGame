@@ -8,7 +8,7 @@
 [![Socket.IO](https://img.shields.io/badge/Socket.IO-4.6-010101?logo=socket.io&logoColor=white)](https://socket.io/)
 [![Express](https://img.shields.io/badge/Express-4.18-000000?logo=express&logoColor=white)](https://expressjs.com/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-2.2.0-brightgreen.svg)](package.json)
+[![Version](https://img.shields.io/badge/version-2.6.0-brightgreen.svg)](package.json)
 [![Joi](https://img.shields.io/badge/Validation-Joi-00A36C)](https://joi.dev/)
 
 </div>
@@ -31,13 +31,16 @@
 | 🎨 **Tema Claro/Oscuro** | Interfaz moderna con cambio de tema |
 | 😄 **Reacciones en Vivo** | Sistema de emojis para interactuar durante la votación |
 | 📊 **Estadísticas Avanzadas** | Win Rate automático, Partidas Jugadas, Votos Correctos y Victorias por rol |
+| 🌍 **Estadísticas Globales** | Contador público de partidas jugadas en el footer |
 | 👥 **Panel Global** | Seguimiento persistente de jugadores vivos sin parpadeos entre rondas |
 | 🎨 **UI Optimizada** | Lobby "side-by-side", Votación en grilla y badges para gestión de turnos |
 | � **Reconexión Inteligente** | Grace Period de 45s para conexiones inestables (móviles) |
 | �️ **Seguridad (Joi)** | Validación estricta de datos para prevenir inyecciones y crashes |
 | 🧩 **Frontend Modular** | Código organizado en módulos ES6 (game, ui, socket, utils) |
-| 👻 **Modo Espectador** | Observa partidas en curso sin participar |
-
+| 👻 **Modo Espectador** | Observa partidas en curso sin participar || 📈 **Analytics & Privacy** | Sistema de tracking GDPR-compliant con cookie consent |
+| 🗄️ **Base de Datos** | PostgreSQL/Supabase para estadísticas y analytics persistentes |
+| 🌐 **PWA** | Instalable como app nativa con service workers |
+| ❤️ **Health Monitoring** | Endpoint /health para monitoring y auto-cleanup de salas |
 ---
 
 ## 🚀 Inicio Rápido
@@ -65,10 +68,25 @@ npm start
 
 ### Configuración (Opcional)
 
-```bash
-# Cambiar el puerto (default: 4000)
-PORT=8080 npm start
+Crea un archivo `.env` basado en `.env.example`:
 
+```bash
+# Servidor
+PORT=4000
+NODE_ENV=production
+
+# Seguridad
+ALLOWED_ORIGINS=https://tudominio.com
+
+# Base de Datos (opcional - para analytics persistentes)
+DATABASE_URL=postgresql://user:pass@host:5432/db?sslmode=verify-full
+
+# Admin Panel
+ADMIN_USER=admin
+ADMIN_PASS=secreto
+```
+
+```bash
 # Modo desarrollo con auto-reload
 npm run dev
 ```
@@ -249,10 +267,53 @@ Los tests incluyen:
 - [x] Reconexión inteligente (Grace Period 45s)
 - [x] Validación de seguridad (Joi)
 - [x] PWA instalable
+- [x] Base de datos PostgreSQL con analytics
+- [x] Sistema de privacidad GDPR-compliant
+- [x] Admin dashboard con métricas
+- [x] Health check y auto-cleanup de salas
+- [x] Logs estructurados con Winston
+- [x] Compresión Gzip para responses
+- [x] Estadísticas públicas sin autenticación
+- [x] Contador global de partidas en footer
 - [ ] Salas privadas con contraseña
 - [ ] Personalización de avatares
-- [ ] Base de datos persistente (Redis/MongoDB)
-- [ ] Integración con Discord
+- [ ] Redis para escalabilidad horizontal
+- [ ] Integración con Discord/Telegram
+
+---
+
+## 🏗️ Arquitectura
+
+```
+ImpostorGame/
+├── server.js              # Servidor Express + Socket.IO
+├── config/                # Configuración centralizada
+├── database/              # PostgreSQL connection pool
+├── src/
+│   ├── handlers/          # Socket.IO event handlers
+│   ├── managers/          # Lógica de salas y jugadores
+│   ├── game/              # Mecánicas del juego
+│   ├── services/          # Analytics y estadísticas
+│   └── utils/             # Validaciones y helpers
+├── public/                # Frontend (HTML, CSS, JS)
+│   ├── js/
+│   │   └── modules/       # ES6 modules (socket, ui, game, analytics)
+│   ├── styles.css         # Tema dark/light
+│   └── manifest.json      # PWA config
+├── private/               # Admin dashboard (auth protegido)
+└── tests/                 # Tests de integración
+
+```
+
+### Stack Tecnológico
+
+- **Backend**: Node.js 20+, Express 4.18, Socket.IO 4.6
+- **Frontend**: Vanilla JavaScript (ES6 Modules), CSS Variables
+- **Base de Datos**: PostgreSQL/Supabase
+- **Logging**: Winston (structured logs, file rotation en producción)
+- **Seguridad**: Helmet, CORS, Rate Limiting (HTTP + Socket), Joi validation
+- **Analytics**: Custom event tracking con sessionStorage
+- **Deploy**: Render (Web Service + PostgreSQL)
 
 ---
 
@@ -279,7 +340,7 @@ Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) par
 
 **⭐ Si te gusta el proyecto, dale una estrella en GitHub ⭐**
 
-**Última actualización**: Enero 2026 | **Versión**: 2.2.0 | **Estado**: ✅ Producción
+**Última actualización**: Febrero 2026 | **Versión**: 2.6.0 | **Estado**: ✅ Producción | **Live**: [elimpostormp.com](https://elimpostormp.com)
 
 [⬆ Volver arriba](#-el-impostor)
 

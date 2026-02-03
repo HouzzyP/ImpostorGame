@@ -74,7 +74,7 @@ ImpostorGame/
 │   └── 📁 js/modules/                # MÓDULOS JAVASCRIPT (arquitectura modular)
 │       ├── analytics.js              # Tracking de eventos (Google Analytics)
 │       ├── game.js                   # Lógica principal del juego en cliente
-│       ├── i18n.js                   # Internacionalización (multi-idioma)
+
 │       ├── socket.js                 # Gestión de conexión Socket.IO
 │       ├── ui.js                     # Manejo de UI (pantallas, animaciones)
 │       └── utils.js                  # Utilidades del cliente
@@ -373,16 +373,6 @@ renderPlayerList(players)                     // Renderiza lista de jugadores
 - Funciona offline (limitado)
 - Service Worker para cacheo
 - Icono y splash screen configurados
-
----
-
-### 🌍 **Internacionalización (i18n)**
-**Archivos:** `public/js/modules/i18n.js`
-
-**Idiomas soportados:** (si está implementado)
-- Español (default)
-- Inglés
-- Portugués
 
 ---
 
